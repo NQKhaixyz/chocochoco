@@ -155,6 +155,18 @@ Trong bản đơn giản với stake cố định, payout mỗi người thắng
 	- tối ưu lưu trữ (struct gọn, event tối thiểu)
 
 
+## Setup với pnpm
+
+- Cài pnpm (khuyến nghị Corepack): `corepack enable && corepack prepare pnpm@9 --activate` (hoặc `npm i -g pnpm`).
+- Kiểm tra cài đặt: `pnpm -v`.
+- Workspace: file `pnpm-workspace.yaml` tại root đã khai báo gói `frontend`.
+- Khởi tạo Frontend (chưa có mã nguồn FE):
+  - `pnpm dlx create-vite@latest frontend --template react-swc`
+  - `cd frontend && pnpm i && pnpm dev`
+  - Thêm vào `frontend/package.json`: trường `"packageManager": "pnpm@9.x"`
+  - Commit `pnpm-lock.yaml` để cố định dependency graph.
+- Lưu ý: phần contracts dùng Foundry (không phụ thuộc npm). pnpm chủ yếu áp dụng cho FE/tooling JS.
+
 ## Frontend & UX
 
 - Stack: React + Vite/Next.js + Tailwind + wagmi + viem
