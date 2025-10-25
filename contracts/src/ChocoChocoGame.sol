@@ -1,10 +1,17 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
+import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
+
 /// @title ChocoChocoGame v1 (native) — Commit–Reveal Minority Game
 /// @notice Core mechanics: commit, reveal, settle, claim. Fee to treasury. Tie refunds.
 /// @dev v1: native token only; forfeit OFF (non-revealers can refund after settle).
-contract ChocoChocoGame {
+contract ChocoChocoGame is ReentrancyGuard, Ownable, Pausable {
+    using SafeERC20 for IERC20;
     enum Status {
         Created,
         CommitOpen,
@@ -18,6 +25,12 @@ contract ChocoChocoGame {
         Cacao
     }
 
+    enum ForfeitMode {
+        NoneMode,
+        Partial,
+        Full
+    }
+
     struct Round {
         Status status;
         uint64 commitDeadline;
@@ -28,13 +41,22 @@ contract ChocoChocoGame {
         uint128 poolCacao; // revealed stakes only
         uint64 countMilk; // revealed count
         uint64 countCacao; // revealed count
+        uint8 forfeitMode; // 0=None,1=Partial,2=Full
+        uint16 forfeitBps; // used when mode=Partial (0..10000)
+        address stakeToken; // address(0) => native
     }
 
     address public immutable treasury;
-    uint64 public immutable commitDurDefault;
-    uint64 public immutable revealDurDefault;
+    uint64 public commitDurDefault;
+    uint64 public revealDurDefault;
     uint256 public currentRoundId;
     mapping(uint256 => Round) public rounds;
+    // defaults for future rounds
+    uint96 public defaultStake;
+    uint16 public defaultFeeBps;
+    uint8 public defaultForfeitMode; // 0=None,1=Partial,2=Full
+    uint16 public defaultForfeitBps; // when Partial
+    address public defaultStakeToken; // 0 => native, otherwise ERC20
 
     // per-round player data
     mapping(uint256 => mapping(address => bytes32)) public commitments;
@@ -57,22 +79,37 @@ contract ChocoChocoGame {
     error NoCommit();
     error NotSettled();
     error NotWinner();
+    error AlreadySettled();
 
     constructor(
         address _treasury,
         uint96 stake,
         uint64 commitDur,
         uint64 revealDur,
-        uint16 feeBps
-    ) {
+        uint16 feeBps,
+        uint8 forfeitMode,
+        uint16 forfeitBps
+    ) Ownable(msg.sender) {
         require(_treasury != address(0), "treasury=0");
         require(stake > 0, "stake=0");
         require(commitDur > 0 && revealDur > 0, "dur=0");
         require(feeBps <= 2_000, "fee too high"); // safety cap: 20%
-    treasury = _treasury;
-    commitDurDefault = commitDur;
-    revealDurDefault = revealDur;
-    _createNewRound(stake, commitDurDefault, revealDurDefault, feeBps);
+        require(forfeitMode <= uint8(ForfeitMode.Full), "bad forfeit mode");
+        if (forfeitMode == uint8(ForfeitMode.Partial)) {
+            require(forfeitBps <= 10_000, "forfeit bps");
+        } else {
+            // ignore bps for None/Full
+            forfeitBps = 0;
+        }
+        treasury = _treasury;
+        commitDurDefault = commitDur;
+        revealDurDefault = revealDur;
+        defaultStake = stake;
+        defaultFeeBps = feeBps;
+        defaultForfeitMode = forfeitMode;
+        defaultForfeitBps = forfeitBps;
+        defaultStakeToken = address(0);
+        _createNewRound(stake, commitDurDefault, revealDurDefault, feeBps);
     }
 
     // helper: keccak(choice (1|2), salt)
@@ -80,16 +117,21 @@ contract ChocoChocoGame {
         return keccak256(abi.encodePacked(tribe, salt));
     }
 
-    function commitMeow(bytes32 commitment) external payable {
+    function commitMeow(bytes32 commitment) external payable whenNotPaused {
         Round storage r = rounds[currentRoundId];
         if (r.status != Status.CommitOpen || block.timestamp > r.commitDeadline) revert CommitClosed();
-        if (msg.value != r.stake) revert BadStake();
+        if (r.stakeToken == address(0)) {
+            if (msg.value != r.stake) revert BadStake();
+        } else {
+            if (msg.value != 0) revert BadStake();
+            IERC20(r.stakeToken).safeTransferFrom(msg.sender, address(this), r.stake);
+        }
         if (commitments[currentRoundId][msg.sender] != bytes32(0)) revert AlreadyCommitted();
         commitments[currentRoundId][msg.sender] = commitment;
         emit MeowCommitted(currentRoundId, msg.sender);
     }
 
-    function revealMeow(uint8 tribeValue, bytes32 salt) external {
+    function revealMeow(uint8 tribeValue, bytes32 salt) external whenNotPaused {
         Round storage r = rounds[currentRoundId];
         if (r.status == Status.Settled) revert RevealClosed();
         if (!(block.timestamp > r.commitDeadline && block.timestamp <= r.revealDeadline)) revert RevealClosed();
@@ -111,10 +153,10 @@ contract ChocoChocoGame {
         emit MeowRevealed(currentRoundId, msg.sender, tribe);
     }
 
-    function settleRound() external {
+    function settleRound() external nonReentrant {
         Round storage r = rounds[currentRoundId];
-        if (block.timestamp <= r.revealDeadline) revert RevealClosed();
-        if (r.status == Status.Settled) revert AlreadyClaimed(); // reuse as "already settled"
+    if (block.timestamp <= r.revealDeadline) revert RevealClosed();
+    if (r.status == Status.Settled) revert AlreadySettled();
         r.status = Status.Settled;
 
         Tribe minority = _minorityChoice(r);
@@ -124,17 +166,21 @@ contract ChocoChocoGame {
             uint256 fee = (totalPool * r.feeBps) / 10_000;
             if (fee > 0) {
                 // send fee to treasury
-                (bool ok, ) = payable(treasury).call{value: fee}("");
-                require(ok, "treasury xfer fail");
+                if (r.stakeToken == address(0)) {
+                    (bool ok, ) = payable(treasury).call{value: fee}("");
+                    require(ok, "treasury xfer fail");
+                } else {
+                    IERC20(r.stakeToken).safeTransfer(treasury, fee);
+                }
             }
         }
         emit RoundMeowed(currentRoundId, minority);
 
-    // open next round with same params
-    _createNewRound(r.stake, commitDurDefault, revealDurDefault, r.feeBps);
+        // open next round with default params (may be updated by admin)
+        _createNewRound(defaultStake, commitDurDefault, revealDurDefault, defaultFeeBps);
     }
 
-    function claimTreat(uint256 roundId) external {
+    function claimTreat(uint256 roundId) external nonReentrant {
         Round storage r = rounds[roundId];
         if (r.status != Status.Settled) revert NotSettled();
         if (claimed[roundId][msg.sender]) revert AlreadyClaimed();
@@ -145,12 +191,18 @@ contract ChocoChocoGame {
         (Tribe minority, uint256 totalPool, uint256 minorityPool) = _settleData(r);
 
         uint256 amount;
+        uint256 penalty;
         if (minority == Tribe.None) {
             // Tie: refund stake to anyone who committed
-            amount = r.stake;
+            if (userTribe == Tribe.None) {
+                // apply forfeit on non-reveal if configured
+                (amount, penalty) = _computeNoRevealRefund(r);
+            } else {
+                amount = r.stake;
+            }
         } else if (userTribe == Tribe.None) {
-            // Forfeit OFF v1: non-revealers can refund their stake
-            amount = r.stake;
+            // Forfeit modes: apply penalty for non-revealers
+            (amount, penalty) = _computeNoRevealRefund(r);
         } else if (userTribe == minority) {
             // Winner payout proportional to stake (stake is fixed, simplifies to distributable * stake / minorityPool)
             uint256 fee = (totalPool * r.feeBps) / 10_000;
@@ -161,8 +213,20 @@ contract ChocoChocoGame {
         }
 
         claimed[roundId][msg.sender] = true;
-        (bool ok, ) = payable(msg.sender).call{value: amount}("");
-        require(ok, "payout xfer fail");
+        if (penalty > 0) {
+            if (r.stakeToken == address(0)) {
+                (bool okT, ) = payable(treasury).call{value: penalty}("");
+                require(okT, "treasury xfer fail");
+            } else {
+                IERC20(r.stakeToken).safeTransfer(treasury, penalty);
+            }
+        }
+        if (r.stakeToken == address(0)) {
+            (bool ok, ) = payable(msg.sender).call{value: amount}("");
+            require(ok, "payout xfer fail");
+        } else {
+            IERC20(r.stakeToken).safeTransfer(msg.sender, amount);
+        }
         emit TreatClaimed(roundId, msg.sender, amount);
     }
 
@@ -176,7 +240,95 @@ contract ChocoChocoGame {
         r.revealDeadline = r.commitDeadline + revealDur;
         r.stake = stake;
         r.feeBps = feeBps;
+        r.forfeitMode = defaultForfeitMode;
+        r.forfeitBps = defaultForfeitBps;
+        r.stakeToken = defaultStakeToken;
         emit RoundCreated(currentRoundId, stake, r.commitDeadline, r.revealDeadline, feeBps);
+    }
+
+    // ------------------------------ admin controls ------------------------------
+    event NextParamsUpdated(uint96 stake, uint64 commitDur, uint64 revealDur, uint16 feeBps, uint8 forfeitMode, uint16 forfeitBps, address stakeToken);
+
+    function setParamsForNext(
+        uint96 stake,
+        uint64 commitDur,
+        uint64 revealDur,
+        uint16 feeBps,
+        uint8 forfeitMode,
+        uint16 forfeitBps,
+        address stakeToken
+    ) external onlyOwner {
+        require(stake > 0, "stake=0");
+        require(commitDur > 0 && revealDur > 0, "dur=0");
+        require(feeBps <= 2_000, "fee too high");
+        require(forfeitMode <= uint8(ForfeitMode.Full), "bad forfeit mode");
+        if (forfeitMode == uint8(ForfeitMode.Partial)) {
+            require(forfeitBps <= 10_000, "forfeit bps");
+        } else {
+            forfeitBps = 0;
+        }
+        defaultStake = stake;
+        commitDurDefault = commitDur;
+        revealDurDefault = revealDur;
+        defaultFeeBps = feeBps;
+        defaultForfeitMode = forfeitMode;
+        defaultForfeitBps = forfeitBps;
+        defaultStakeToken = stakeToken;
+        emit NextParamsUpdated(stake, commitDur, revealDur, feeBps, forfeitMode, forfeitBps, stakeToken);
+    }
+
+    function pause() external onlyOwner {
+        _pause();
+    }
+
+    function unpause() external onlyOwner {
+        _unpause();
+    }
+
+    // Lightweight view for tests and offchain readers
+    function getRoundMeta(uint256 id)
+        external
+        view
+        returns (
+            Status status,
+            uint64 commitDl,
+            uint64 revealDl,
+            uint96 stake,
+            uint16 fee,
+            uint8 forfeitMode,
+            uint16 forfeitBps,
+            address stakeToken
+        )
+    {
+        Round storage r = rounds[id];
+        return (r.status, r.commitDeadline, r.revealDeadline, r.stake, r.feeBps, r.forfeitMode, r.forfeitBps, r.stakeToken);
+    }
+
+    function getRoundStatus(uint256 id) external view returns (Status) {
+        return rounds[id].status;
+    }
+
+    function getRoundTimes(uint256 id) external view returns (uint64 commitDl, uint64 revealDl) {
+        Round storage r = rounds[id];
+        return (r.commitDeadline, r.revealDeadline);
+    }
+
+    function getRoundConfig(uint256 id)
+        external
+        view
+        returns (uint96 stake, uint16 fee, uint8 forfeitMode, uint16 forfeitBps, address stakeToken)
+    {
+        Round storage r = rounds[id];
+        return (r.stake, r.feeBps, r.forfeitMode, r.forfeitBps, r.stakeToken);
+    }
+
+    function getRoundPools(uint256 id)
+        external
+        view
+        returns (uint128 poolMilk, uint128 poolCacao, uint64 countMilk, uint64 countCacao)
+    {
+        Round storage r = rounds[id];
+        return (r.poolMilk, r.poolCacao, r.countMilk, r.countCacao);
     }
 
     function _minorityChoice(Round storage r) internal view returns (Tribe) {
@@ -197,6 +349,20 @@ contract ChocoChocoGame {
             minorityPool = uint256(r.poolCacao);
         } else {
             minorityPool = 0;
+        }
+    }
+
+    function _computeNoRevealRefund(Round storage r) internal view returns (uint256 amount, uint256 penalty) {
+        if (r.forfeitMode == uint8(ForfeitMode.NoneMode)) {
+            amount = r.stake;
+            penalty = 0;
+        } else if (r.forfeitMode == uint8(ForfeitMode.Partial)) {
+            penalty = (uint256(r.stake) * uint256(r.forfeitBps)) / 10_000;
+            amount = uint256(r.stake) - penalty;
+        } else {
+            // Full
+            penalty = r.stake;
+            amount = 0;
         }
     }
 
