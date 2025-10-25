@@ -1,16 +1,32 @@
-# React + Vite
+# ChocoChoco Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Vite + React + TypeScript + Tailwind + ESLint/Prettier + wagmi v2 + viem. Includes WalletConnect and a simple network switch (Base Sepolia / Polygon Mumbai).
 
-Currently, two official plugins are available:
+## Commands
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+```bash
+pnpm i
+cp .env.example .env
+pnpm dev
+```
 
-## React Compiler
+- Build: `pnpm build`
+- Preview: `pnpm preview`
+- Lint: `pnpm lint`
+- Format: `pnpm format`
 
-The React Compiler is currently not compatible with SWC. See [this issue](https://github.com/vitejs/vite-plugin-react/issues/428) for tracking the progress.
+## Configure
 
-## Expanding the ESLint configuration
+Fill `.env`:
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+```
+VITE_BASE_SEPOLIA_RPC=...
+VITE_POLYGON_MUMBAI_RPC=...
+VITE_WALLETCONNECT_PROJECT_ID=...
+```
+
+## Features
+
+- Connect wallet (Injected / WalletConnect)
+- Switch between Base Sepolia (84532) and Polygon Mumbai (80001)
+- Show address and balance for the active network

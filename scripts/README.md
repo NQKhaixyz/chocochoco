@@ -1,25 +1,92 @@
-# ChocoChoco Scripts
+# Scripts & Environment
 
-Utility scripts for deployment, verification, PR automation, data export, etc.
+## 1) Environment Variables
 
-Examples:
-- deploy-testnet.sh — deploy + verify to Base Sepolia / Polygon Amoy
-- verify.sh — re-run verification for an existing address
-- env.example — template for RPC URLs, keys, constructor params
-- create_chocochoco_pr.sh — open a PR to https://github.com/NQKhaixyz/chocochoco
-
-GameFi-related env (gợi ý):
-- STAKE_TOKEN (khuyến nghị đặt = FOOD_TOKEN)
-- FOOD_TOKEN, PAW_TOKEN, CAT_NFT, CHEST_ADDRESS
-
-Usage (PR script):
+Create an `.env` from the example at the repo root:
 
 ```bash
-chmod +x scripts/create_chocochoco_pr.sh
-./scripts/create_chocochoco_pr.sh  # requires gh auth login
+cp .env.example .env
 ```
 
-## Deploy + Verify (Testnets)
+Required:
+- `RPC_URL` — RPC endpoint
+- `CHAIN_ID` — e.g. Base Sepolia = `84532`
+- `CONTRACT_ADDRESS` — deployed game contract
+- `TREASURY_ADDRESS` — treasury wallet address
+
+FE public (pick one depending on framework):
+- Next: `NEXT_PUBLIC_*`
+- Vite: `VITE_*`
+
+If using the contracts workspace, also create `contracts/.env` from `contracts/.env.example` and fill `PRIVATE_KEY`.
+
+## 2) Frontend
+
+Vite app in `frontend/` reads env from `VITE_*`:
+
+```bash
+cd frontend
+pnpm i
+cp .env.example .env
+pnpm dev      # or: pnpm dev:fe
+```
+
+Build / Preview:
+
+```bash
+pnpm build    # or: pnpm build:fe
+pnpm preview  # or: pnpm preview:fe
+```
+
+Env used by FE (see `src/lib/wagmi.ts`):
+- `VITE_RPC_URL`, `VITE_CHAIN_ID`
+- `VITE_CONTRACT_ADDRESS`, `VITE_TREASURY_ADDRESS`
+
+## 3) Backend Deploy
+
+Auto-detect and run (Hardhat or Foundry):
+
+```bash
+chmod +x scripts/run-deploy.sh
+scripts/run-deploy.sh
+```
+
+- Hardhat: looks for `hardhat.config.*` and runs `scripts/deploy.ts` (if present)
+- Foundry: uses `scripts/deploy-testnet.sh` (Base Sepolia by default)
+
+Manual (Foundry):
+
+```bash
+chmod +x scripts/deploy-testnet.sh
+scripts/deploy-testnet.sh base     # or: polygon
+```
+
+Verify:
+
+```bash
+chmod +x scripts/verify.sh
+scripts/verify.sh base 0xYourAddress
+```
+
+## 4) Update FE Contract Address
+
+After deployment, update FE env:
+
+```
+VITE_CONTRACT_ADDRESS=0x...
+VITE_TREASURY_ADDRESS=0x...
+VITE_RPC_URL=...
+VITE_CHAIN_ID=...
+```
+
+## 5) Notes
+- Do not commit `.env` with private keys.
+- FE only reads `NEXT_PUBLIC_*` (Next) or `VITE_*` (Vite).
+- Treasury/Contract must be valid `0x` addresses (20 bytes).
+
+---
+
+## EVM Deploy + Verify (Testnets)
 
 Prerequisites:
 - Foundry installed (`foundryup`), dependencies installed in `contracts/`
@@ -30,7 +97,6 @@ Prerequisites:
 Deploy to Base Sepolia:
 
 ```bash
-chmod +x scripts/deploy-testnet.sh
 scripts/deploy-testnet.sh base
 ```
 
@@ -40,24 +106,40 @@ Deploy to Polygon Amoy:
 scripts/deploy-testnet.sh polygon
 ```
 
-The script broadcasts and verifies. A summary is printed and also saved to `contracts/deployments.json`. Raw broadcast artifacts live under `contracts/broadcast/`.
+The script broadcasts and verifies. A summary is printed and saved to `contracts/deployments.json`. Raw broadcast artifacts live under `contracts/broadcast/`.
 
-Re-verify (optional) if needed:
+Re-verify:
 
 ```bash
-chmod +x scripts/verify.sh
 scripts/verify.sh base 0xYourDeployedAddress
 scripts/verify.sh polygon 0xYourDeployedAddress
 ```
 
-## Frontend Env
+---
 
-After deploy, update the FE env with the address and RPC for the target chain. Use `frontend/.env.example` as a template, create `frontend/.env` with:
+## Solana (Anchor) — Deploy + IDL Publish
 
+Prerequisites:
+- Install Solana CLI and Anchor CLI
+- Build your Anchor program so that `target/deploy/<program>.so` and `target/idl/<program>.json` exist
+
+Deploy to Devnet/Testnet:
+
+```bash
+chmod +x scripts/solana-deploy.sh
+scripts/solana-deploy.sh devnet   # or testnet
 ```
-VITE_CHAIN_ID=84532                 # Base Sepolia (or 80002 for Polygon Amoy)
-VITE_RPC_URL=$BASE_SEPOLIA_RPC      # or $POLYGON_AMOY_RPC
-VITE_GAME_ADDRESS=0xDeployedAddress
+
+What it does:
+- Sets `solana config` RPC
+- Deploys with `solana program deploy`
+- Publishes IDL on-chain (`anchor idl init/upgrade`)
+- Saves `solana/deployments.json` and updates `frontend/.env`
+
+Manual IDL publish:
+
+```bash
+chmod +x scripts/solana-verify.sh
+scripts/solana-verify.sh devnet <PROGRAM_ID> target/idl/<program>.json
 ```
 
-Then restart the FE dev server.

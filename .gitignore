@@ -25,17 +25,21 @@ node_modules/
 dist/
 build/
 out/
-.cache/
-.parcel-cache/
-.turbo/
 .next/
 .vercel/
+.turbo/
+.cache/
+.parcel-cache/
 coverage/
 .nyc_output/
 .eslintcache
+
+# Solana/Anchor build artifacts
+solana/target/
+**/target/idl/
+**/target/deploy/
 
 # Environment files
 .env
 .env.*
 !.env.example
-

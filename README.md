@@ -1,87 +1,176 @@
-# ChocoChoco 🍫🐱
+﻿# ChocoChoco — FE/BE + Commit–Reveal (Minority Game)
+
+> Run local/dev/testnet, deploy/verify, and contract links.
+> Thiết kế: see [DESIGN.md](./DESIGN.md) · Sprint: see [SPRINT_PLAN.md](./SPRINT_PLAN.md)
+
+---
+
+## 1) Overview
+- FE: React/TypeScript (Vite), Tailwind, wagmi v2 + viem
+- BE: Foundry (Solidity 0.8.x, commit–reveal). Hardhat examples included in docs.
+- Networks: Base Sepolia (84532), Polygon Mumbai (80001)/Amoy (80002)
+
+## 2) Requirements
+- Node.js LTS + pnpm
+- Wallet (MetaMask, etc.)
+- RPC provider (Alchemy/Infura/Ankr…)
+- (BE) Private key for testnet deploy
+
+## 3) Environment Setup
+Create env files from examples:
+- Root: `cp .env.example .env`
+- FE: `cd frontend && cp .env.example .env`
+- Contracts: `cp contracts/.env.example contracts/.env`
+
+Important variables:
+- Chain/RPC: `RPC_URL`, `CHAIN_ID`
+- Contracts: `CONTRACT_ADDRESS`, `TREASURY_ADDRESS`
+- FE (Vite): `VITE_RPC_URL`, `VITE_CHAIN_ID`, `VITE_CONTRACT_ADDRESS`, `VITE_TREASURY_ADDRESS`
+- (BE) `PRIVATE_KEY`
+
+Do NOT commit secrets in `.env`.
+
+## 4) Run Local / Dev / Testnet
+Install deps:
+- `pnpm i`
+
+Frontend (Vite):
+- `pnpm --filter frontend dev` or `cd frontend && pnpm dev`
+- Build/Preview: `pnpm build` / `pnpm preview`
+
+Backend (Foundry in this repo):
+- Build: `forge build`
+- Deploy: `scripts/deploy-testnet.sh base` (or `polygon`). See `scripts/README.md`.
+
+Hardhat (if present):
+- Build: `hardhat compile`
+- Deploy: `hardhat run scripts/deploy.ts --network custom`
+
+## 5) Deploy & Verify (Testnet)
+Foundry:
+- `scripts/deploy-testnet.sh base|polygon`
+- `scripts/verify.sh base|polygon 0xDeployedAddress`
+- After deploy, update FE env: `VITE_CONTRACT_ADDRESS=0xDeployed...`
+
+Hardhat (example):
+- `npx hardhat run scripts/deploy.ts --network custom`
+- `npx hardhat verify --network custom 0xDeployed <ctor args>`
+
+## 6) Contract Addresses & Explorers
+Update after each deploy.
+- Base Sepolia (84532): `0x...` → https://sepolia.basescan.org/address/0x...
+- Polygon Mumbai (80001): `0x...` → https://mumbai.polygonscan.com/address/0x...
+- Polygon Amoy (80002): `0x...` → https://amoy.polygonscan.com/address/0x...
+Tx example: https://sepolia.basescan.org/tx/TX_HASH
+
+## 7) Dev Flow (Commit → Reveal → Claim)
+- Commit: choose Milk/Cacao; app creates salt locally, computes commitment, sends commit with stake.
+- Reveal: within window, send `reveal(choice, salt)`.
+- Settle: minority side wins (tie refunds); event `RoundMeowed` emitted.
+- Claim: only winners claim; UI prevents double-claim. Details in `DESIGN.md`.
+
+## 8) Troubleshooting
+- Wallet/network: ensure `CHAIN_ID` matches wallet; try public RPC.
+- Commit/Reveal rejected: confirm countdown windows (chain time). Hash mismatch → check commitment schema and salt.
+- Double-claim: UI disables if `hasClaimed`; refetch after mined.
+- Verify fails: correct network/args; wait a few minutes, retry.
+- Env not read: Vite requires `VITE_*` variables.
+- Countdown skew: use the chain time hook (`frontend/src/hooks/useChainTime.ts`).
+
+## 9) Conventions
+- Branches: main (stable), dev (integration), feature: `feat/*`, `fix/*`
+- Commits: Conventional Commits (`feat:`, `fix:`, `chore:`, …)
+- Env: keep `.env.example`, never commit secrets.
+
+## 10) Links
+- [DESIGN.md](./DESIGN.md)
+- [SPRINT_PLAN.md](./SPRINT_PLAN.md)
+
+---
+# ChocoChoco ðŸ«ðŸ±
 
 In a world of sweets, only the fewest get the feast.
 
-Thế giới ngọt ngào, ai ít hơn… ăn nhiều hơn!
+Tháº¿ giá»›i ngá»t ngÃ o, ai Ã­t hÆ¡nâ€¦ Äƒn nhiá»u hÆ¡n!
 
-ChocoChoco là trò chơi minority commit–reveal on-chain: mỗi vòng, mèo chọn “Mèo Sữa” 🍼 hay “Mèo Cacao” 🍫, stake một khoản, và Phe Thiểu Số ăn trọn phần bánh của Phe Đa Số (sau khi trích một ít crumb fee 🍪 cho Cat Treasury).
+ChocoChoco lÃ  trÃ² chÆ¡i minority commitâ€“reveal on-chain: má»—i vÃ²ng, mÃ¨o chá»n â€œMÃ¨o Sá»¯aâ€ ðŸ¼ hay â€œMÃ¨o Cacaoâ€ ðŸ«, stake má»™t khoáº£n, vÃ  Phe Thiá»ƒu Sá»‘ Äƒn trá»n pháº§n bÃ¡nh cá»§a Phe Äa Sá»‘ (sau khi trÃ­ch má»™t Ã­t crumb fee ðŸª cho Cat Treasury).
 
-- Chain gợi ý: Base / Polygon (phí rẻ)
-- Frontend gợi ý: React + Tailwind + wagmi + viem
-- Contract: Solidity 0.8.x, commit–reveal, pull-payment claim
+- Chain gá»£i Ã½: Base / Polygon (phÃ­ ráº»)
+- Frontend gá»£i Ã½: React + Tailwind + wagmi + viem
+- Contract: Solidity 0.8.x, commitâ€“reveal, pull-payment claim
 
 
-## Nội dung
+## Ná»™i dung
 
-- Tổng quan nhanh
-- Luật chơi chi tiết
-- Cơ chế on-chain (commit–reveal, state machine)
-- Thiết kế contract & API (gợi ý)
-- Kinh tế học & công thức thưởng
-- Chống Sybil & bảo mật
+- Tá»•ng quan nhanh
+- Luáº­t chÆ¡i chi tiáº¿t
+- CÆ¡ cháº¿ on-chain (commitâ€“reveal, state machine)
+- Thiáº¿t káº¿ contract & API (gá»£i Ã½)
+- Kinh táº¿ há»c & cÃ´ng thá»©c thÆ°á»Ÿng
+- Chá»‘ng Sybil & báº£o máº­t
 - Frontend & UX
-- Triển khai & môi trường
-- Kiểm thử & checklist
-- Lộ trình (MVP → Production)
+- Triá»ƒn khai & mÃ´i trÆ°á»ng
+- Kiá»ƒm thá»­ & checklist
+- Lá»™ trÃ¬nh (MVP â†’ Production)
 - FAQ
-- Giấy phép & đóng góp
+- Giáº¥y phÃ©p & Ä‘Ã³ng gÃ³p
 
 
-## Tài liệu liên quan
+## TÃ i liá»‡u liÃªn quan
 
-- Thiết kế chi tiết: see `DESIGN.md`
-- Kế hoạch sprint: see `SPRINT_PLAN.md`
-## Tổng quan nhanh
+- Thiáº¿t káº¿ chi tiáº¿t: see `DESIGN.md`
+- Káº¿ hoáº¡ch sprint: see `SPRINT_PLAN.md`
+## Tá»•ng quan nhanh
 
-- Mỗi vòng có hai lựa chọn: Mèo Sữa (Milk) hoặc Mèo Cacao (Cacao)
-- Giai đoạn Commit: gửi hash = keccak(choice, salt) + stake
-- Giai đoạn Reveal: tiết lộ choice + salt để xác thực
-- Kết toán: bên có ít người hơn (Minority) thắng; nếu hòa thì hoàn stake hoặc rollover (tùy cấu hình)
-- Fee: 3% crumb fee chuyển về Cat Treasury
-- Claim: người thắng tự gọi claim() để nhận tiền, tránh for-loop tốn gas
+- Má»—i vÃ²ng cÃ³ hai lá»±a chá»n: MÃ¨o Sá»¯a (Milk) hoáº·c MÃ¨o Cacao (Cacao)
+- Giai Ä‘oáº¡n Commit: gá»­i hash = keccak(choice, salt) + stake
+- Giai Ä‘oáº¡n Reveal: tiáº¿t lá»™ choice + salt Ä‘á»ƒ xÃ¡c thá»±c
+- Káº¿t toÃ¡n: bÃªn cÃ³ Ã­t ngÆ°á»i hÆ¡n (Minority) tháº¯ng; náº¿u hÃ²a thÃ¬ hoÃ n stake hoáº·c rollover (tÃ¹y cáº¥u hÃ¬nh)
+- Fee: 3% crumb fee chuyá»ƒn vá» Cat Treasury
+- Claim: ngÆ°á»i tháº¯ng tá»± gá»i claim() Ä‘á»ƒ nháº­n tiá»n, trÃ¡nh for-loop tá»‘n gas
 
 
-## Luật chơi chi tiết
+## Luáº­t chÆ¡i chi tiáº¿t
 
-1) Chọn phe
-- “Mèo Sữa” 🍼 thích vị ngọt nhẹ.
-- “Mèo Cacao” 🍫 mê hương đắng quyến rũ.
+1) Chá»n phe
+- â€œMÃ¨o Sá»¯aâ€ ðŸ¼ thÃ­ch vá»‹ ngá»t nháº¹.
+- â€œMÃ¨o Cacaoâ€ ðŸ« mÃª hÆ°Æ¡ng Ä‘áº¯ng quyáº¿n rÅ©.
 
 2) Commit
-- Người chơi gọi commit(commitment) kèm stake, với commitment = keccak256(abi.encodePacked(choice, salt))
+- NgÆ°á»i chÆ¡i gá»i commit(commitment) kÃ¨m stake, vá»›i commitment = keccak256(abi.encodePacked(choice, salt))
 
 3) Reveal
-- Sau khi cửa commit đóng, người chơi reveal(choice, salt). Hệ thống xác minh hash.
+- Sau khi cá»­a commit Ä‘Ã³ng, ngÆ°á»i chÆ¡i reveal(choice, salt). Há»‡ thá»‘ng xÃ¡c minh hash.
 
-4) Phân thắng thua
-- Minority = phe có số người reveal hợp lệ ít hơn.
-- Nếu count bằng nhau: hòa → hoàn stake hoặc rollover sang vòng sau (tùy cấu hình sản phẩm).
+4) PhÃ¢n tháº¯ng thua
+- Minority = phe cÃ³ sá»‘ ngÆ°á»i reveal há»£p lá»‡ Ã­t hÆ¡n.
+- Náº¿u count báº±ng nhau: hÃ²a â†’ hoÃ n stake hoáº·c rollover sang vÃ²ng sau (tÃ¹y cáº¥u hÃ¬nh sáº£n pháº©m).
 
 5) Payout
-- Người thắng chia pool của bên thua (sau khi trừ fee cho Treasury).
+- NgÆ°á»i tháº¯ng chia pool cá»§a bÃªn thua (sau khi trá»« fee cho Treasury).
 
-6) Không reveal
-- Không reveal đúng hạn có thể bị forfeit một phần hoặc toàn bộ stake theo quy tắc vòng.
+6) KhÃ´ng reveal
+- KhÃ´ng reveal Ä‘Ãºng háº¡n cÃ³ thá»ƒ bá»‹ forfeit má»™t pháº§n hoáº·c toÃ n bá»™ stake theo quy táº¯c vÃ²ng.
 
 
-## Cơ chế on-chain (commit–reveal, state machine)
+## CÆ¡ cháº¿ on-chain (commitâ€“reveal, state machine)
 
-State machine mỗi vòng:
+State machine má»—i vÃ²ng:
 
-- Created → CommitOpen → RevealOpen → Settled
+- Created â†’ CommitOpen â†’ RevealOpen â†’ Settled
 
-Thông số vòng:
+ThÃ´ng sá»‘ vÃ²ng:
 
 - stakeSize, feeBps (vd: 300 = 3%)
 - commitDeadline, revealDeadline
 
-Dữ liệu cốt lõi:
+Dá»¯ liá»‡u cá»‘t lÃµi:
 
 - commitments[user] = bytes32 hash
 - revealed[user] = Choice
 - countMilk, countCacao, poolMilk, poolCacao
 
-Sự kiện (ví dụ có chủ đề “meow”):
+Sá»± kiá»‡n (vÃ­ dá»¥ cÃ³ chá»§ Ä‘á» â€œmeowâ€):
 
 - RoundCreated(id, stake, commitDeadline, revealDeadline, feeBps)
 - MeowCommitted(id, player)
@@ -90,11 +179,11 @@ Sự kiện (ví dụ có chủ đề “meow”):
 - TreatClaimed(id, player, amount)
 
 
-## Thiết kế contract & API (gợi ý)
+## Thiáº¿t káº¿ contract & API (gá»£i Ã½)
 
-Lưu ý: Đây là khung tham khảo, không dùng ngay cho production nếu chưa kiểm thử/kiểm toán. Bạn có thể bắt đầu từ mẫu “MinorityGame” (Solidity 0.8.x) với các đổi tên cho phù hợp thương hiệu mèo.
+LÆ°u Ã½: ÄÃ¢y lÃ  khung tham kháº£o, khÃ´ng dÃ¹ng ngay cho production náº¿u chÆ°a kiá»ƒm thá»­/kiá»ƒm toÃ¡n. Báº¡n cÃ³ thá»ƒ báº¯t Ä‘áº§u tá»« máº«u â€œMinorityGameâ€ (Solidity 0.8.x) vá»›i cÃ¡c Ä‘á»•i tÃªn cho phÃ¹ há»£p thÆ°Æ¡ng hiá»‡u mÃ¨o.
 
-Các thực thể chính:
+CÃ¡c thá»±c thá»ƒ chÃ­nh:
 
 - enum Status { Created, CommitOpen, RevealOpen, Settled }
 - enum Tribe { None, Milk, Cacao }
@@ -110,82 +199,82 @@ Các thực thể chính:
 	- uint64 countCacao
 }
 
-Gợi ý hàm public (tên theo chủ đề):
+Gá»£i Ã½ hÃ m public (tÃªn theo chá»§ Ä‘á»):
 
 - commitMeow(bytes32 commitment) payable
 - revealMeow(uint8 tribe, bytes32 salt)
 - settleRound()
 - claimTreat(uint256 roundId)
-- makeCommitment(uint8 tribe, bytes32 salt) → bytes32 (helper off-chain/on-chain)
+- makeCommitment(uint8 tribe, bytes32 salt) â†’ bytes32 (helper off-chain/on-chain)
 
-Quy tắc triển khai:
+Quy táº¯c triá»ƒn khai:
 
-- Pull payment: người thắng tự claim để nhận payout.
-- Không dùng loop dài khi trả thưởng.
-- Chống reentrancy (ReentrancyGuard) và kiểm tra effects-before-interactions.
-- Sử dụng salt bí mật và không tái sử dụng salt giữa nhiều vòng.
+- Pull payment: ngÆ°á»i tháº¯ng tá»± claim Ä‘á»ƒ nháº­n payout.
+- KhÃ´ng dÃ¹ng loop dÃ i khi tráº£ thÆ°á»Ÿng.
+- Chá»‘ng reentrancy (ReentrancyGuard) vÃ  kiá»ƒm tra effects-before-interactions.
+- Sá»­ dá»¥ng salt bÃ­ máº­t vÃ  khÃ´ng tÃ¡i sá»­ dá»¥ng salt giá»¯a nhiá»u vÃ²ng.
 
 
-## Kinh tế học & công thức thưởng
+## Kinh táº¿ há»c & cÃ´ng thá»©c thÆ°á»Ÿng
 
-- Crumb fee: 3% (mặc định), chuyển về Cat Treasury trước khi chia thưởng.
-- Hai lựa chọn công thức chia thưởng:
+- Crumb fee: 3% (máº·c Ä‘á»‹nh), chuyá»ƒn vá» Cat Treasury trÆ°á»›c khi chia thÆ°á»Ÿng.
+- Hai lá»±a chá»n cÃ´ng thá»©c chia thÆ°á»Ÿng:
 
-1) Theo vốn góp (khuyến nghị):
+1) Theo vá»‘n gÃ³p (khuyáº¿n nghá»‹):
 
 	$payout_i = \dfrac{stake_i}{Pool_{Minority}}\times (TotalPool - Fee)$
 
-2) Chia đều theo đầu người (vui nhưng dễ Sybil):
+2) Chia Ä‘á»u theo Ä‘áº§u ngÆ°á»i (vui nhÆ°ng dá»… Sybil):
 
 	$payout = \dfrac{TotalPool - Fee}{Count_{Minority}}$
 
-Trong bản đơn giản với stake cố định, payout mỗi người thắng = (TotalPool - Fee) × (stake / PoolMinority).
+Trong báº£n Ä‘Æ¡n giáº£n vá»›i stake cá»‘ Ä‘á»‹nh, payout má»—i ngÆ°á»i tháº¯ng = (TotalPool - Fee) Ã— (stake / PoolMinority).
 
 
-## Chống Sybil & bảo mật
+## Chá»‘ng Sybil & báº£o máº­t
 
-- Commit–Reveal để tránh front-running/last-second switch.
-- Forfeit nếu không reveal đúng hạn (cấu hình phần trăm cắt).
-- Tăng chi phí chống Sybil: stake tối thiểu cao, phí tham gia cố định, giới hạn 1 vé/địa chỉ/vòng.
-- Tuỳ chọn: NFT ticket, Soulbound, KYC/POAP.
-- Bảo mật contract:
+- Commitâ€“Reveal Ä‘á»ƒ trÃ¡nh front-running/last-second switch.
+- Forfeit náº¿u khÃ´ng reveal Ä‘Ãºng háº¡n (cáº¥u hÃ¬nh pháº§n trÄƒm cáº¯t).
+- TÄƒng chi phÃ­ chá»‘ng Sybil: stake tá»‘i thiá»ƒu cao, phÃ­ tham gia cá»‘ Ä‘á»‹nh, giá»›i háº¡n 1 vÃ©/Ä‘á»‹a chá»‰/vÃ²ng.
+- Tuá»³ chá»n: NFT ticket, Soulbound, KYC/POAP.
+- Báº£o máº­t contract:
 	- ReentrancyGuard cho claim
-	- pull-payment, không chuyển tiền trong vòng lặp
-	- kiểm tra biên deadline chặt chẽ
-	- tối ưu lưu trữ (struct gọn, event tối thiểu)
+	- pull-payment, khÃ´ng chuyá»ƒn tiá»n trong vÃ²ng láº·p
+	- kiá»ƒm tra biÃªn deadline cháº·t cháº½
+	- tá»‘i Æ°u lÆ°u trá»¯ (struct gá»n, event tá»‘i thiá»ƒu)
 
 
-## Setup với pnpm
+## Setup vá»›i pnpm
 
-- Cài pnpm (khuyến nghị Corepack): `corepack enable && corepack prepare pnpm@9 --activate` (hoặc `npm i -g pnpm`).
-- Kiểm tra cài đặt: `pnpm -v`.
-- Workspace: file `pnpm-workspace.yaml` tại root đã khai báo gói `frontend`.
-- Khởi tạo Frontend (chưa có mã nguồn FE):
+- CÃ i pnpm (khuyáº¿n nghá»‹ Corepack): `corepack enable && corepack prepare pnpm@9 --activate` (hoáº·c `npm i -g pnpm`).
+- Kiá»ƒm tra cÃ i Ä‘áº·t: `pnpm -v`.
+- Workspace: file `pnpm-workspace.yaml` táº¡i root Ä‘Ã£ khai bÃ¡o gÃ³i `frontend`.
+- Khá»Ÿi táº¡o Frontend (chÆ°a cÃ³ mÃ£ nguá»“n FE):
   - `pnpm dlx create-vite@latest frontend --template react-swc`
   - `cd frontend && pnpm i && pnpm dev`
-  - Thêm vào `frontend/package.json`: trường `"packageManager": "pnpm@9.x"`
-  - Commit `pnpm-lock.yaml` để cố định dependency graph.
-- Lưu ý: phần contracts dùng Foundry (không phụ thuộc npm). pnpm chủ yếu áp dụng cho FE/tooling JS.
+  - ThÃªm vÃ o `frontend/package.json`: trÆ°á»ng `"packageManager": "pnpm@9.x"`
+  - Commit `pnpm-lock.yaml` Ä‘á»ƒ cá»‘ Ä‘á»‹nh dependency graph.
+- LÆ°u Ã½: pháº§n contracts dÃ¹ng Foundry (khÃ´ng phá»¥ thuá»™c npm). pnpm chá»§ yáº¿u Ã¡p dá»¥ng cho FE/tooling JS.
 
 ## Frontend & UX
 
 - Stack: React + Vite/Next.js + Tailwind + wagmi + viem
-- Màn hình chính:
-	- Join (Commit): chọn “Milk/Cacao”, nhập stake, gửi commit
-	- Reveal: dán salt (hoặc lưu tự động), bấm reveal
-	- Claim: hiển thị thắng/thua, nút claim nếu thắng
-	- Lịch vòng & đếm ngược: hiển thị deadline commit/reveal
-- Thương hiệu:
-	- Nền pastel hồng kem, nút bo tròn, font tròn kiểu Mochi
-	- Animation: mèo thắng nhảy múa; thua xị mặt; hiệu ứng “purr~” khi thắng
-- Dữ liệu hiển thị: count mỗi phe, tổng pool, fee, tỷ lệ ăn chia ước tính
+- MÃ n hÃ¬nh chÃ­nh:
+	- Join (Commit): chá»n â€œMilk/Cacaoâ€, nháº­p stake, gá»­i commit
+	- Reveal: dÃ¡n salt (hoáº·c lÆ°u tá»± Ä‘á»™ng), báº¥m reveal
+	- Claim: hiá»ƒn thá»‹ tháº¯ng/thua, nÃºt claim náº¿u tháº¯ng
+	- Lá»‹ch vÃ²ng & Ä‘áº¿m ngÆ°á»£c: hiá»ƒn thá»‹ deadline commit/reveal
+- ThÆ°Æ¡ng hiá»‡u:
+	- Ná»n pastel há»“ng kem, nÃºt bo trÃ²n, font trÃ²n kiá»ƒu Mochi
+	- Animation: mÃ¨o tháº¯ng nháº£y mÃºa; thua xá»‹ máº·t; hiá»‡u á»©ng â€œpurr~â€ khi tháº¯ng
+- Dá»¯ liá»‡u hiá»ƒn thá»‹: count má»—i phe, tá»•ng pool, fee, tá»· lá»‡ Äƒn chia Æ°á»›c tÃ­nh
 
 
-## Triển khai & môi trường
+## Triá»ƒn khai & mÃ´i trÆ°á»ng
 
-Mặc dù repo này chưa chứa code Solidity sẵn cho ChocoChoco, bạn có thể khởi tạo nhanh project smart contract theo một trong hai cách:
+Máº·c dÃ¹ repo nÃ y chÆ°a chá»©a code Solidity sáºµn cho ChocoChoco, báº¡n cÃ³ thá»ƒ khá»Ÿi táº¡o nhanh project smart contract theo má»™t trong hai cÃ¡ch:
 
-1) Foundry (đề xuất cho Solidity):
+1) Foundry (Ä‘á» xuáº¥t cho Solidity):
 
 ```
 forge init choco-contracts
@@ -201,83 +290,84 @@ cd choco-contracts
 npm i @openzeppelin/contracts
 ```
 
-Sau đó thêm contract MinorityGame/ChocoChocoGame theo khung ở phần “Thiết kế contract”, cấu hình mạng (Base/Polygon), và môi trường:
+Sau Ä‘Ã³ thÃªm contract MinorityGame/ChocoChocoGame theo khung á»Ÿ pháº§n â€œThiáº¿t káº¿ contractâ€, cáº¥u hÃ¬nh máº¡ng (Base/Polygon), vÃ  mÃ´i trÆ°á»ng:
 
 - RPC_URL, PRIVATE_KEY, TREASURY_ADDRESS
 
-Gợi ý tham số mặc định:
+Gá»£i Ã½ tham sá»‘ máº·c Ä‘á»‹nh:
 
 - stake: 0.01 ETH/MATIC
 - feeBps: 300 (3%)
-- commit/reveal duration: 30 phút/30 phút
+- commit/reveal duration: 30 phÃºt/30 phÃºt
 
 
-## Kiểm thử & checklist
+## Kiá»ƒm thá»­ & checklist
 
-Các ca kiểm thử cốt lõi:
+CÃ¡c ca kiá»ƒm thá»­ cá»‘t lÃµi:
 
-- commit đúng stake, double-commit bị chặn
-- reveal đúng hash; reveal sai/sai thời điểm bị chặn
-- no-reveal bị forfeit (nếu bật)
-- hòa: hoàn stake/rollover theo cấu hình
+- commit Ä‘Ãºng stake, double-commit bá»‹ cháº·n
+- reveal Ä‘Ãºng hash; reveal sai/sai thá»i Ä‘iá»ƒm bá»‹ cháº·n
+- no-reveal bá»‹ forfeit (náº¿u báº­t)
+- hÃ²a: hoÃ n stake/rollover theo cáº¥u hÃ¬nh
 - settle sau revealDeadline
-- claim chỉ dành cho người thắng, không trùng lặp
-- fee chuyển về Treasury chính xác
-- chống reentrancy ở claim
+- claim chá»‰ dÃ nh cho ngÆ°á»i tháº¯ng, khÃ´ng trÃ¹ng láº·p
+- fee chuyá»ƒn vá» Treasury chÃ­nh xÃ¡c
+- chá»‘ng reentrancy á»Ÿ claim
 
-Khuyến nghị công cụ:
+Khuyáº¿n nghá»‹ cÃ´ng cá»¥:
 
-- Unit test với Foundry/Hardhat
-- Property-based test: số đông/số ít ngẫu nhiên
-- Gas snapshot: đảm bảo không có vòng lặp lớn
+- Unit test vá»›i Foundry/Hardhat
+- Property-based test: sá»‘ Ä‘Ã´ng/sá»‘ Ã­t ngáº«u nhiÃªn
+- Gas snapshot: Ä‘áº£m báº£o khÃ´ng cÃ³ vÃ²ng láº·p lá»›n
 
 
-## Lộ trình (MVP → Production)
+## Lá»™ trÃ¬nh (MVP â†’ Production)
 
 MVP (testnet):
 
-- Commit–Reveal–Settle–Claim đầy đủ
-- UI 3 màn hình cơ bản, đồng hồ đếm ngược
-- Fee 3%, 1 vé/địa chỉ/vòng, penalty no-reveal
+- Commitâ€“Revealâ€“Settleâ€“Claim Ä‘áº§y Ä‘á»§
+- UI 3 mÃ n hÃ¬nh cÆ¡ báº£n, Ä‘á»“ng há»“ Ä‘áº¿m ngÆ°á»£c
+- Fee 3%, 1 vÃ©/Ä‘á»‹a chá»‰/vÃ²ng, penalty no-reveal
 
 Production:
 
-- NFT Cat Avatar (tuỳ chọn), leaderboard tuần
-- Analytics: số người/round, tỉ lệ Milk/Cacao, doanh thu fee
-- Bổ sung VRF cho mini-event ngẫu nhiên (airdrop, lucky cat)
-- Audit/bug bounty, triển khai mainnet
+- NFT Cat Avatar (tuá»³ chá»n), leaderboard tuáº§n
+- Analytics: sá»‘ ngÆ°á»i/round, tá»‰ lá»‡ Milk/Cacao, doanh thu fee
+- Bá»• sung VRF cho mini-event ngáº«u nhiÃªn (airdrop, lucky cat)
+- Audit/bug bounty, triá»ƒn khai mainnet
 
 
 ## FAQ
 
-Q: Vì sao cần commit–reveal?
-- Để tránh front-running và đổi phe phút chót.
+Q: VÃ¬ sao cáº§n commitâ€“reveal?
+- Äá»ƒ trÃ¡nh front-running vÃ  Ä‘á»•i phe phÃºt chÃ³t.
 
-Q: Nếu bằng nhau thì sao?
-- Hòa → hoàn stake hoặc rollover (tuỳ cấu hình sản phẩm).
+Q: Náº¿u báº±ng nhau thÃ¬ sao?
+- HÃ²a â†’ hoÃ n stake hoáº·c rollover (tuá»³ cáº¥u hÃ¬nh sáº£n pháº©m).
 
-Q: Không kịp reveal?
-- Có thể bị cắt stake (forfeit), phần cắt thêm vào pool/treasury tuỳ luật vòng.
+Q: KhÃ´ng ká»‹p reveal?
+- CÃ³ thá»ƒ bá»‹ cáº¯t stake (forfeit), pháº§n cáº¯t thÃªm vÃ o pool/treasury tuá»³ luáº­t vÃ²ng.
 
 Q: Token hay native?
-- Hỗ trợ cả native (ETH/MATIC) hoặc ERC-20 ($CHOCO). Bản MVP nên chọn một trong hai cho đơn giản.
+- Há»— trá»£ cáº£ native (ETH/MATIC) hoáº·c ERC-20 ($CHOCO). Báº£n MVP nÃªn chá»n má»™t trong hai cho Ä‘Æ¡n giáº£n.
 
 
-## Giấy phép & đóng góp
+## Giáº¥y phÃ©p & Ä‘Ã³ng gÃ³p
 
-- Giấy phép: MIT (xem `LICENSE`).
-- Đóng góp: chào mừng PR/issue. Vui lòng mô tả rõ ràng, thêm test nếu chỉnh logic.
+- Giáº¥y phÃ©p: MIT (xem `LICENSE`).
+- ÄÃ³ng gÃ³p: chÃ o má»«ng PR/issue. Vui lÃ²ng mÃ´ táº£ rÃµ rÃ ng, thÃªm test náº¿u chá»‰nh logic.
 
 
-## Gợi ý đổi tên theo chủ đề mèo (tham khảo)
+## Gá»£i Ã½ Ä‘á»•i tÃªn theo chá»§ Ä‘á» mÃ¨o (tham kháº£o)
 
-- event Settled → RoundMeowed
-- event Committed → MeowCommitted
-- event Revealed → MeowRevealed
-- event Claimed → TreatClaimed
-- Choice.A/B → Tribe.Milk/Cacao
+- event Settled â†’ RoundMeowed
+- event Committed â†’ MeowCommitted
+- event Revealed â†’ MeowRevealed
+- event Claimed â†’ TreatClaimed
+- Choice.A/B â†’ Tribe.Milk/Cacao
 
-Thông điệp giao diện ví dụ:
+ThÃ´ng Ä‘iá»‡p giao diá»‡n vÃ­ dá»¥:
 
-“🐱 Meow! Mèo Sữa thắng vòng này! 🍶🎉”
+â€œðŸ± Meow! MÃ¨o Sá»¯a tháº¯ng vÃ²ng nÃ y! ðŸ¶ðŸŽ‰â€
+
 
