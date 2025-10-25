@@ -1,0 +1,12 @@
+# Foundry outputs
+out/
+broadcast/
+cache/
+
+# Local env
+.env
+.env.*
+
+# Libs (kept installed via forge install; commonly not committed)
+# If you prefer vendoring, remove these ignores.
+lib/

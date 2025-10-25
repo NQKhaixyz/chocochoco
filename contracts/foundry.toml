@@ -1,0 +1,16 @@
+[profile.default]
+src = "src"
+out = "out"
+libs = ["lib"]
+remappings = [
+    "@openzeppelin/=lib/openzeppelin-contracts/"
+]
+
+[rpc_endpoints]
+# Populate via environment variables in dev scripts
+base_sepolia = "${BASE_SEPOLIA_RPC}"
+polygon_amoy = "${POLYGON_AMOY_RPC}"
+
+[etherscan]
+base_sepolia = { key = "${BASESCAN_API_KEY}" }
+polygon_amoy = { key = "${POLYGONSCAN_API_KEY}" }
