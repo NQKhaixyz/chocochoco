@@ -1,29 +1,16 @@
-# ChocoChoco Frontend
+# React + Vite
 
-Stack: React + Tailwind + wagmi + viem.
+This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
-Core (Minority Game):
-- Join (Commit)
-- Reveal
-- Claim
-- Round schedule & countdown
+Currently, two official plugins are available:
 
-GameFi screens (đề xuất):
-- Inventory (danh sách CatNFT, chi tiết metadata)
-- Chest (mua/mở rương bằng `$PAW`, hiện kết quả)
-- Marketplace (liệt kê/đi link Seaport/OpenSea; về sau có thể mua/bán nội bộ)
-- Feed (tiêu `$FOOD` để nâng cấp/thay skin – mở dần)
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
 
-Wallet/Config:
-- wagmi connectors (MetaMask, WalletConnect)
-- Mạng: Base/Polygon testnet/mainnet
-- Env: `VITE_CONTRACT_ADDRESS`, `VITE_STAKE_TOKEN`, `VITE_FOOD_TOKEN`, `VITE_PAW_TOKEN`, `VITE_CAT_NFT`, `VITE_CHEST_ADDRESS`
+## React Compiler
 
-Data/Indexing: 
-- Subgraph (The Graph/SubQuery) để hiển thị lịch sử round, leaderboard, inventory, sự kiện mở rương.
+The React Compiler is currently not compatible with SWC. See [this issue](https://github.com/vitejs/vite-plugin-react/issues/428) for tracking the progress.
 
-Tài liệu liên quan:
-- Hợp đồng: `../contracts/README.md`
-- Thiết kế: `../DESIGN.md`
-- Sprint: `../SPRINT_PLAN.md`
-- GameFi: `../docs/gamefi/ECONOMY.md`, `../docs/gamefi/NFTS.md`, `../docs/gamefi/CHESTS.md`, `../docs/gamefi/MARKETPLACE.md`
+## Expanding the ESLint configuration
+
+If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
