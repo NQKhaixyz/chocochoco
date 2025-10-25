@@ -8,6 +8,10 @@ Examples:
 - env.example (RPC_URL, PRIVATE_KEY, TREASURY_ADDRESS, CONTRACT_ADDRESS)
 - create_chocochoco_pr.sh (open a PR to https://github.com/NQKhaixyz/chocochoco with current chocochoco content)
 
+GameFi-related env (gợi ý):
+- STAKE_TOKEN (khuyến nghị đặt = FOOD_TOKEN)
+- FOOD_TOKEN, PAW_TOKEN, CAT_NFT, CHEST_ADDRESS
+
 Usage (PR script):
 
 ```bash
