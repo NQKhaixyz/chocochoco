@@ -38,12 +38,22 @@ Phạm vi: MVP (testnet) → Production uplift
 
 ## 3) Epics & Backlog (liên kết DESIGN.md)
 
-- E1: Smart Contract Core (commit–reveal)
-- E2: Frontend MVP (Join/Reveal/Claim)
-- E3: Deploy & Ops (testnet, verify, env)
-- E4: Analytics/Indexing & Leaderboard
-- E5: Security & QA
-- E6: Branding & Content
+- E1: Smart Contract Core (commit-reveal) [owner: admin1]
+- E2: Frontend MVP (Join/Reveal/Claim) [owner: admin2]
+- E3: Deploy & Ops (testnet, verify, env) [owner: admin2]
+- E4: Analytics/Indexing & Leaderboard [owner: admin2]
+- E5: Security & QA [owner: admin1]
+- E6: Branding & Content [owner: admin2]
+
+## Assignments (admin1/admin2)
+
+- admin1 (contracts, security, tests):
+  - S1.1, S1.2, S1.3, S1.12, S1.13
+  - S2.1, S2.2, S2.3, S2.8, S2.9
+
+- admin2 (frontend, docs, ops, analytics):
+  - S1.4, S1.5, S1.6, S1.7, S1.8, S1.9, S1.10, S1.11
+  - S2.4, S2.5, S2.6, S2.7
 
 ## 4) Sprint 1 — Stories & Tasks (2 tuần)
 
@@ -51,49 +61,62 @@ E1 — Contract v1 (native token)
 - S1.1 Spec & scaffolding (Foundry/Hardhat)
   - AC: Tạo project, cài OZ, cấu hình network.
   - Est: 3
+  - Owner: admin1
 - S1.2 Implement ChocoChocoGame v1 (native)
   - AC: constructor, commitMeow, revealMeow, settleRound, claimTreat, makeCommitment, events.
   - Rule: tieMode=refund, forfeit=off, fee=3%, stake=0.01, commit/reveal=30/30min.
   - Est: 8
+  - Owner: admin1
 - S1.3 Unit tests (happy/edge)
   - AC: commit stake sai/đúng, double-commit, reveal sớm/trễ, bad salt, tie refund, fee accuracy, claim winner only, double-claim.
   - Est: 8
+  - Owner: admin1
 - S1.4 Deploy testnet & verify
   - AC: contract address, verify OK, env URL.
   - Est: 3
+  - Owner: admin2
 
 E2 — Frontend MVP
 - S1.5 Project setup (React + Vite/Next, Tailwind, wagmi, viem)
   - AC: repo FE, connect wallet, network switch.
   - Est: 5
+  - Owner: admin2
 - S1.6 Join (Commit) screen
   - AC: chọn Milk/Cacao, generate salt (local), compute commitment, gửi tx + stake.
   - Est: 5
+  - Owner: admin2
 - S1.7 Reveal screen
   - AC: hiển thị round, countdown, reveal bằng salt, handle errors.
   - Est: 5
+  - Owner: admin2
 - S1.8 Claim screen
   - AC: hiển thị winner/minority, nút claim, thông báo.
   - Est: 3
+  - Owner: admin2
 - S1.9 Shared components & Countdown
   - AC: đồng bộ thời gian từ chain, format thời gian.
   - Est: 3
+  - Owner: admin2
 
 E3 — Deploy & Ops
 - S1.10 Env & Config
   - AC: RPC_URL, CONTRACT_ADDRESS, TREASURY_ADDRESS; build/deploy scripts.
   - Est: 3
+  - Owner: admin2
 - S1.11 Basic docs & runbook
   - AC: README cập nhật bước chạy, liên kết DESIGN, SPRINT_PLAN.
   - Est: 2
+  - Owner: admin2
 
 E5 — Security & QA (cơ bản trong S1)
 - S1.12 Reentrancy & CEI checks
   - AC: dùng ReentrancyGuard cho claim, kiểm tra effects-before-interactions.
   - Est: 3
+  - Owner: admin1
 - S1.13 Gas sanity & no large loops
   - AC: claim pull-only; sự kiện tối thiểu.
   - Est: 2
+  - Owner: admin1
 
 Buffer: 10–15%.
 
@@ -103,36 +126,45 @@ E1 — Contract v2 features
 - S2.1 Forfeit mode (partial/full)
   - AC: param forfeitMode/forfeitBps, test no-reveal paths.
   - Est: 8
+  - Owner: admin1
 - S2.2 Admin params & Pausable
   - AC: setParamsForNext, pause/unpause, tests.
   - Est: 5
+  - Owner: admin1
 - S2.3 ERC-20 support (optional switch)
   - AC: SafeERC20, approve+commit path, tests.
   - Est: 8
+  - Owner: admin1
 
 E4 — Indexing & Leaderboard
 - S2.4 Subgraph setup
   - AC: Entities (Round, PlayerRound, Claim, TreasuryFee), handlers for events.
   - Est: 8
+  - Owner: admin2
 - S2.5 Leaderboard UI
   - AC: top payout, win-rate tuần, pagination.
   - Est: 5
+  - Owner: admin2
 
 E6 — Branding & Content
 - S2.6 Theme pastel, animation mèo thắng/thua
   - AC: assets, micro-animations, sound toggle.
   - Est: 5
+  - Owner: admin2
 - S2.7 Landing & docs polish
   - AC: hướng dẫn người dùng mới, tooltips.
   - Est: 3
+  - Owner: admin2
 
 E5 — Security & QA
 - S2.8 Property/Fuzz & Invariants
   - AC: bảo toàn tiền, no overflow, tổng claim <= distributable.
   - Est: 8
+  - Owner: admin1
 - S2.9 Audit-lite checklist
   - AC: rà soát permissions, errors, deadcode, events, gas.
   - Est: 3
+  - Owner: admin1
 
 ## 6) Phụ thuộc & Rủi ro
 

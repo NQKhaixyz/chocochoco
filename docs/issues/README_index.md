@@ -25,3 +25,8 @@ Sprint 2
 - 020 S2.7 â€” Landing & docs polish
 - 021 S2.8 â€” Property/Fuzz & Invariants
 - 022 S2.9 â€” Audit-lite checklist
+
+Sprint 3
+- 023 S3.1 — GameFi economy & CatNFT
+- 024 S3.2 — Loot Chests (Gacha)
+- 025 S3.3 — Marketplace integration

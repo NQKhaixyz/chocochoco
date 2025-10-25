@@ -19,7 +19,7 @@ Wallet/Config:
 - Mạng: Base/Polygon testnet/mainnet
 - Env: `VITE_CONTRACT_ADDRESS`, `VITE_STAKE_TOKEN`, `VITE_FOOD_TOKEN`, `VITE_PAW_TOKEN`, `VITE_CAT_NFT`, `VITE_CHEST_ADDRESS`
 
-Data/Indexing:
+Data/Indexing: 
 - Subgraph (The Graph/SubQuery) để hiển thị lịch sử round, leaderboard, inventory, sự kiện mở rương.
 
 Tài liệu liên quan:
