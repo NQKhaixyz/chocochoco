@@ -1,0 +1,38 @@
+:root {
+  --bg: #fffdfc;
+  --fg: #2a2a2a;
+  --muted: #6b7280;
+
+  --pastel-pink:   #ffd6e7;
+  --pastel-mint:   #c8f7e4;
+  --pastel-yellow: #fff1b8;
+  --pastel-blue:   #d7ecff;
+  --pastel-lilac:  #e6dcff;
+
+  --brand: var(--pastel-mint);
+  --accent: var(--pastel-pink);
+  --card: #ffffffcc;
+  --border: #e8e8e8;
+
+  --win: #b6f2c3;
+  --lose: #ffd7d7;
+}
+
+.dark {
+  --bg: #101012;
+  --fg: #f3f4f6;
+  --muted: #9ca3af;
+
+  --card: #18181bcc;
+  --border: #2a2a2a;
+
+  --win: #2e7d5d;
+  --lose: #7d2e2e;
+}
+
+html, body { background: var(--bg); color: var(--fg); }
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}
+

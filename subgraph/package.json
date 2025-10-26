@@ -1,0 +1,18 @@
+{
+  "name": "chocochoco-subgraph",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "codegen": "graph codegen",
+    "build": "graph build",
+    "create:base-sepolia": "graph create --node https://api.studio.thegraph.com/deploy/ chocochoco-base-sepolia",
+    "deploy:base-sepolia": "graph deploy --studio chocochoco-base-sepolia",
+    "create:mumbai": "graph create --node https://api.studio.thegraph.com/deploy/ chocochoco-mumbai",
+    "deploy:mumbai": "graph deploy --studio chocochoco-mumbai"
+  },
+  "devDependencies": {
+    "@graphprotocol/graph-cli": "^0.87.0",
+    "@graphprotocol/graph-ts": "^0.34.0"
+  }
+}
+

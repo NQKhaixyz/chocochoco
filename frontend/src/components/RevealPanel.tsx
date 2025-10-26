@@ -3,6 +3,7 @@ import { useAccount, useChainId, useWaitForTransactionReceipt, useWriteContract 
 import type { Abi } from 'viem'
 import { sideToUint, saltStorageKey } from '../lib/commit'
 import Countdown from './Countdown'
+import Tooltip from './ui/Tooltip'
 import { txLink } from '../lib/explorer'
 
 type Props = {
@@ -77,7 +78,7 @@ export default function RevealPanel({ round, contractAddress, contractAbi, funct
   }
 
   return (
-    <div className="max-w-xl w-full space-y-4 border p-4 rounded-2xl">
+    <div id="reveal-panel" className="max-w-xl w-full space-y-4 rounded-xl2 border border-border bg-card p-4 shadow-soft">
       <h2 className="text-xl font-semibold">Reveal Phase</h2>
 
       <div className="text-sm">
@@ -98,9 +99,11 @@ export default function RevealPanel({ round, contractAddress, contractAbi, funct
       <div className="text-sm font-mono break-all">Salt: {salt ?? '—'}</div>
 
       <div className="mt-3">
-        <button onClick={onReveal} disabled={isPending || tooEarly || expired} className="px-4 py-2 rounded-xl bg-indigo-600 text-white disabled:opacity-50">
-          {isPending ? 'Revealing…' : expired ? 'Expired' : tooEarly ? 'Not open yet' : 'Reveal'}
-        </button>
+        <Tooltip tip="Chỉ bấm trong thời gian Reveal, dùng đúng salt.">
+          <button onClick={onReveal} disabled={isPending || tooEarly || expired} className="px-4 py-2 rounded-xl bg-indigo-600 text-white disabled:opacity-50">
+            {isPending ? 'Revealing…' : expired ? 'Expired' : tooEarly ? 'Not open yet' : 'Reveal'}
+          </button>
+        </Tooltip>
         {hash && (
           <a href={txLink(chainId, hash)} target="_blank" rel="noreferrer" className="ml-3 text-sm underline">
             View Tx
@@ -116,4 +119,3 @@ export default function RevealPanel({ round, contractAddress, contractAbi, funct
     </div>
   )
 }
-

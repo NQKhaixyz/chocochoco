@@ -39,6 +39,9 @@ solana/target/
 **/target/idl/
 **/target/deploy/
 
+# The Graph generated code
+subgraph/generated/
+
 # Environment files
 .env
 .env.*

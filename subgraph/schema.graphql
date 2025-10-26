@@ -1,0 +1,58 @@
+type Round @entity {
+  id: ID!
+  creator: Bytes
+  commitEnd: BigInt!
+  revealEnd: BigInt!
+
+  totalCommitted: BigInt!
+  totalRevealedMilk: BigInt!
+  totalRevealedCacao: BigInt!
+
+  isSettled: Boolean!
+  winnerSide: Int # 1=Milk, 2=Cacao, null=tie/unknown
+  settledAt: BigInt
+
+  players: [PlayerRound!]! @derivedFrom(field: "round")
+  claims: [Claim!]! @derivedFrom(field: "round")
+  treasuryFees: [TreasuryFee!]! @derivedFrom(field: "round")
+
+  createdAt: BigInt!
+  createdTx: Bytes!
+  settledTx: Bytes
+}
+
+type PlayerRound @entity {
+  id: ID!
+  round: Round!
+  player: Bytes!
+  commitment: Bytes
+  stake: BigInt!
+  side: Int # 1=Milk, 2=Cacao, 0=None
+  salt: Bytes
+  revealed: Boolean!
+  committedAt: BigInt!
+  revealedAt: BigInt
+  commitTx: Bytes!
+  revealTx: Bytes
+
+  claimed: Boolean!
+  payout: BigInt
+}
+
+type Claim @entity {
+  id: ID!
+  round: Round!
+  player: Bytes!
+  amount: BigInt!
+  tx: Bytes!
+  timestamp: BigInt!
+}
+
+type TreasuryFee @entity {
+  id: ID!
+  round: Round!
+  amount: BigInt!
+  tx: Bytes!
+  timestamp: BigInt!
+}
+

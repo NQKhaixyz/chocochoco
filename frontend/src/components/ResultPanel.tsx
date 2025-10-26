@@ -4,6 +4,8 @@ import { useAccount } from 'wagmi'
 import { useRoundResults } from '../hooks/useRoundResults'
 import { useClaimTreat } from '../hooks/useClaimTreat'
 import { txLink } from '../lib/explorer'
+import WinLoseAnimation from './WinLoseAnimation'
+import Tooltip from './ui/Tooltip'
 
 function Toast({ kind, msg }: { kind: 'success' | 'error' | 'info'; msg: string }) {
   const color = kind === 'success' ? 'text-green-600' : kind === 'error' ? 'text-red-600' : 'text-gray-700'
@@ -68,7 +70,7 @@ export default function ResultPanel({
   }
 
   return (
-    <div className="max-w-xl w-full space-y-4 rounded-2xl border p-4">
+    <div id="result-panel" className="max-w-xl w-full space-y-4 rounded-xl2 border border-border bg-card p-4 shadow-soft">
       <h2 className="text-xl font-semibold">Kết quả Round #{roundId.toString()}</h2>
 
       <div className="space-y-1 text-sm">
@@ -88,10 +90,16 @@ export default function ResultPanel({
         {rr.hasClaimed && <div className="text-green-700">Đã nhận thưởng ✅</div>}
       </div>
 
+      {rr.isSettled && rr.winnerSide != null && (
+        <WinLoseAnimation result={rr.isWinner ? 'win' : 'lose'} />
+      )}
+
       <div className="flex items-center gap-3">
-        <button onClick={onClaim} disabled={!canClaim || isPending} className="px-4 py-2 rounded-xl bg-emerald-600 text-white disabled:opacity-50">
-          {isPending ? 'Claiming…' : 'Claim'}
-        </button>
+        <Tooltip tip="Chỉ phe thắng mới claim. Đã claim sẽ bị chặn lần 2.">
+          <button onClick={onClaim} disabled={!canClaim || isPending} className="px-4 py-2 rounded-xl bg-emerald-600 text-white disabled:opacity-50">
+            {isPending ? 'Claiming…' : 'Claim'}
+          </button>
+        </Tooltip>
         {txHash && (
           <a className="text-sm underline" target="_blank" rel="noreferrer" href={txLink(rr.chainId, txHash)}>
             View Tx
@@ -109,4 +117,3 @@ export default function ResultPanel({
     </div>
   )
 }
-

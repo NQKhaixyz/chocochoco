@@ -371,3 +371,7 @@ ThÃ´ng Ä‘iá»‡p giao diá»‡n vÃ­ dá»¥:
 â€œðŸ± Meow! MÃ¨o Sá»¯a tháº¯ng vÃ²ng nÃ y! ðŸ¶ðŸŽ‰â€
 
 
+
+## Indexing / Subgraph
+
+See subgraph/README.md for setup, build and deploy via The Graph Studio. Ensure the ABI exists by running `forge build` so the path `contracts/out/ChocoChocoGame.sol/ChocoChocoGame.json` is available. Update `subgraph.yaml` with `network`, `address`, and `startBlock` before deploying.

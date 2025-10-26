@@ -1,0 +1,36 @@
+specVersion: 1.0.0
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum
+    name: ChocoChocoGame
+    network: base-sepolia
+    source:
+      address: "0x0000000000000000000000000000000000000000" # replace at deploy
+      abi: ChocoChocoGame
+      startBlock: 0
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: typescript
+      entities:
+        - Round
+        - PlayerRound
+        - Claim
+        - TreasuryFee
+      abis:
+        - name: ChocoChocoGame
+          file: ../contracts/out/ChocoChocoGame.sol/ChocoChocoGame.json
+      eventHandlers:
+        - event: RoundCreated(uint256,uint96,uint64,uint64,uint16)
+          handler: handleRoundCreated
+        - event: MeowCommitted(indexed uint256,indexed address)
+          handler: handleMeowCommitted
+        - event: MeowRevealed(indexed uint256,indexed address,uint8)
+          handler: handleMeowRevealed
+        - event: RoundMeowed(indexed uint256,uint8)
+          handler: handleRoundMeowed
+        - event: TreatClaimed(indexed uint256,indexed address,uint256)
+          handler: handleTreatClaimed
+      file: ./src/mappings.ts
+

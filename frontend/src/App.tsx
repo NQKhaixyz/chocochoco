@@ -1,37 +1,51 @@
 import React from 'react'
 import { Navbar } from './components/Navbar'
 import { useAccount, useBalance, useChainId } from 'wagmi'
+import LeaderboardPage from './routes/leaderboard'
+import Landing from './routes/Landing'
+import CoachMarks from './onboarding/CoachMarks'
 
 export default function App() {
   const { address, isConnected } = useAccount()
   const chainId = useChainId()
   const { data: balance } = useBalance({ address, chainId, query: { enabled: isConnected } })
+  const path = typeof window !== 'undefined' ? window.location.pathname : '/'
 
   return (
     <div className="min-h-screen">
       <Navbar />
       <main className="mx-auto max-w-5xl px-4 py-8">
-        <h1 className="text-2xl font-bold mb-4">Welcome to ChocoChoco</h1>
-        {!isConnected ? (
-          <p className="text-slate-600">
-            Connect your wallet to see your address and balance on Base Sepolia or Polygon Mumbai.
-          </p>
+        <CoachMarks />
+        {path === '/leaderboard' ? (
+          <LeaderboardPage />
+        ) : path === '/landing' ? (
+          <Landing />
+        ) : path === '/app' ? (
+          <>
+            <h1 className="text-2xl font-bold mb-4">Welcome to ChocoChoco</h1>
+            {!isConnected ? (
+              <p className="text-slate-600">
+                Connect your wallet to see your address and balance on Base Sepolia or Polygon Mumbai.
+              </p>
+            ) : (
+              <div className="space-y-2">
+                <div className="text-sm">
+                  <span className="font-medium">Address:</span> {address}
+                </div>
+                <div className="text-sm">
+                  <span className="font-medium">Chain ID:</span> {chainId}
+                </div>
+                <div className="text-sm">
+                  <span className="font-medium">Balance:</span>{' '}
+                  {balance ? `${balance.formatted} ${balance.symbol}` : '…'}
+                </div>
+              </div>
+            )}
+          </>
         ) : (
-          <div className="space-y-2">
-            <div className="text-sm">
-              <span className="font-medium">Address:</span> {address}
-            </div>
-            <div className="text-sm">
-              <span className="font-medium">Chain ID:</span> {chainId}
-            </div>
-            <div className="text-sm">
-              <span className="font-medium">Balance:</span>{' '}
-              {balance ? `${balance.formatted} ${balance.symbol}` : '…'}
-            </div>
-          </div>
+          <Landing />
         )}
       </main>
     </div>
   )
 }
-

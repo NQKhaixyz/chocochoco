@@ -10,6 +10,7 @@ import {
   type Side,
 } from '../lib/commit'
 import { useCommitTx } from '../hooks/useCommitTx'
+import Tooltip from './ui/Tooltip'
 
 type Props = {
   roundId: bigint
@@ -94,10 +95,11 @@ export default function CommitPanel(props: Props) {
   const short = (a?: `0x${string}`) => (a ? `${a.slice(0, 6)}…${a.slice(-4)}` : '')
 
   return (
-    <div className="max-w-xl w-full space-y-4 rounded-2xl border p-4">
+    <div id="commit-panel" className="max-w-xl w-full space-y-4 rounded-xl2 border border-border bg-card p-4 shadow-soft">
       <h2 className="text-xl font-semibold">Commit — Chọn phe &amp; Stake</h2>
 
-      <div className="flex gap-2">
+      <div className="flex items-center gap-2">
+        <span className="text-sm text-muted">Phe:</span>
         {(['Milk', 'Cacao'] as Side[]).map((s) => (
           <button
             key={s}
@@ -109,10 +111,18 @@ export default function CommitPanel(props: Props) {
             {s}
           </button>
         ))}
+        <Tooltip tip="Milk=1, Cacao=2. Phe thiểu số thắng.">
+          <span className="text-xs text-muted">(?)</span>
+        </Tooltip>
       </div>
 
       <div>
-        <label className="block text-sm mb-1">Stake (ETH/MATIC)</label>
+        <label className="block text-sm mb-1 flex items-center gap-2">
+          <span>Stake (ETH/MATIC)</span>
+          <Tooltip tip="Nhập số lượng native coin gửi kèm.">
+            <span className="text-xs text-muted">(?)</span>
+          </Tooltip>
+        </label>
         <input
           value={stake}
           onChange={(e) => setStake(e.target.value)}
@@ -139,9 +149,11 @@ export default function CommitPanel(props: Props) {
       </div>
 
       <div className="flex items-center gap-3">
-        <button onClick={onCommit} disabled={isPending} className="px-4 py-2 rounded-xl bg-indigo-600 text-white disabled:opacity-60">
-          {isPending ? 'Submitting…' : 'Commit'}
-        </button>
+        <Tooltip tip="Tạo salt cục bộ → hash → gửi commit tx.">
+          <button onClick={onCommit} disabled={isPending} className="px-4 py-2 rounded-xl bg-indigo-600 text-white disabled:opacity-60">
+            {isPending ? 'Submitting…' : 'Commit'}
+          </button>
+        </Tooltip>
         {txHash && (
           <a className="text-sm underline" target="_blank" rel="noreferrer" href={explorerTx(chainId, txHash)}>
             View Tx
@@ -166,4 +178,3 @@ function fromHexSafe(hex: `0x${string}`): Uint8Array {
   for (let i = 0; i < out.length; i++) out[i] = parseInt(h.slice(2 * i, 2 * i + 2), 16)
   return out
 }
-
