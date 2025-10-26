@@ -1,9 +1,8 @@
 import React, { useEffect } from 'react'
 import { useSound } from '../context/sound'
 import Lottie from 'lottie-react'
-// Vite will serve from public/
-import winAnim from '../../public/assets/anim/win.json'
-import loseAnim from '../../public/assets/anim/lose.json'
+import winAnim from '../assets/anim/win.json'
+import loseAnim from '../assets/anim/lose.json'
 
 export default function WinLoseAnimation({ result }: { result: 'win' | 'lose' }) {
   const { playPurr } = useSound()
@@ -19,4 +18,3 @@ export default function WinLoseAnimation({ result }: { result: 'win' | 'lose' })
     </div>
   )
 }
-
