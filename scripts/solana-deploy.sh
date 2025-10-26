@@ -39,6 +39,10 @@ case "$NETWORK" in
     ;;
 esac
 
+# Build Anchor program to ensure fresh .so and IDL exist
+echo "-> Building Anchor program"
+anchor build
+
 # Find program name from target/deploy if not provided
 if [[ -z "${PROGRAM_NAME:-}" ]]; then
   CANDIDATE=$(ls target/deploy/*.so 2>/dev/null | head -n1 || true)

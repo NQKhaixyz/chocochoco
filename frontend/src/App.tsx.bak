@@ -1,8 +1,5 @@
 import React from 'react'
 import SolanaConnect from './components/SolanaConnect'
-import JoinCommit from './components/JoinCommit'
-import RevealForm from './components/RevealForm'
-import SolanaClaimPanel from './components/SolanaClaimPanel'
 import { Navbar } from './components/Navbar'
 import { useAccount, useBalance, useChainId } from 'wagmi'
 import LeaderboardPage from './routes/leaderboard'
@@ -48,15 +45,6 @@ export default function App() {
             <div className="mt-8">
               <h2 className="text-xl font-semibold mb-2">Solana</h2>
               <SolanaConnect />
-              <div className="mt-6">
-                <JoinCommit />
-              </div>
-              <div className="mt-6">
-                <RevealForm />
-              </div>
-              <div className="mt-6">
-                <SolanaClaimPanel />
-              </div>
             </div>
           </>
         ) : (

@@ -72,3 +72,54 @@ export function buildCommitmentFull(params: {
 export function parseStakeToWei(input: string): bigint {
   return parseEther(input === '' ? '0' : input)
 }
+
+// ---- Solana helpers (sha256-based commitment) ----
+
+export type Tribe = 'Milk' | 'Cacao'
+
+export function keyForSalt(roundId: string, player: string) {
+  return `salt:${roundId}:${player.toLowerCase()}`
+}
+
+export function genSalt32(): Uint8Array {
+  const s = new Uint8Array(32)
+  crypto.getRandomValues(s)
+  return s
+}
+
+export function toHexBytes(u8: Uint8Array) {
+  return Array.from(u8)
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('')
+}
+
+export async function sha256(bytes: Uint8Array): Promise<Uint8Array> {
+  const h = await crypto.subtle.digest('SHA-256', bytes)
+  return new Uint8Array(h)
+}
+
+// commitment = sha256( tribe(1 byte) | salt(32) | player(32) | round(8 LE) )
+export async function computeCommitment(
+  tribe: Tribe,
+  salt: Uint8Array,
+  player32: Uint8Array,
+  roundLE8: Uint8Array,
+) {
+  const side = tribe === 'Milk' ? 0 : 1
+  const buf = new Uint8Array(1 + 32 + 32 + 8)
+  buf[0] = side
+  buf.set(salt, 1)
+  buf.set(player32, 33)
+  buf.set(roundLE8, 65)
+  return sha256(buf)
+}
+
+export function u64le(n: bigint) {
+  const b = new Uint8Array(8)
+  let v = n
+  for (let i = 0; i < 8; i++) {
+    b[i] = Number(v & 0xffn)
+    v >>= 8n
+  }
+  return b
+}
