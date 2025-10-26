@@ -1,0 +1,175 @@
+{
+  "version": "0.1.0",
+  "name": "chocochoco_game",
+  "instructions": [
+    {
+      "name": "initializeRound",
+      "accounts": [],
+      "args": []
+    },
+    {
+      "name": "commitMeow",
+      "accounts": [],
+      "args": []
+    },
+    {
+      "name": "revealMeow",
+      "accounts": [],
+      "args": []
+    },
+    {
+      "name": "finalizeRound",
+      "accounts": [],
+      "args": []
+    },
+    {
+      "name": "claimTreat",
+      "accounts": [],
+      "args": []
+    }
+  ],
+  "accounts": [],
+  "types": [],
+  "events": [
+    {
+      "name": "RoundCreated",
+      "fields": [
+        {
+          "name": "roundId",
+          "type": "u64",
+          "index": false
+        },
+        {
+          "name": "roundAddress",
+          "type": "publicKey",
+          "index": false
+        },
+        {
+          "name": "startTime",
+          "type": "i64",
+          "index": false
+        },
+        {
+          "name": "endTime",
+          "type": "i64",
+          "index": false
+        },
+        {
+          "name": "revealDeadline",
+          "type": "i64",
+          "index": false
+        }
+      ]
+    },
+    {
+      "name": "MeowCommitted",
+      "fields": [
+        {
+          "name": "roundId",
+          "type": "u64",
+          "index": false
+        },
+        {
+          "name": "player",
+          "type": "publicKey",
+          "index": false
+        },
+        {
+          "name": "commitmentHash",
+          "type": {
+            "array": ["u8", 32]
+          },
+          "index": false
+        },
+        {
+          "name": "amount",
+          "type": "u64",
+          "index": false
+        }
+      ]
+    },
+    {
+      "name": "MeowRevealed",
+      "fields": [
+        {
+          "name": "roundId",
+          "type": "u64",
+          "index": false
+        },
+        {
+          "name": "player",
+          "type": "publicKey",
+          "index": false
+        },
+        {
+          "name": "choice",
+          "type": "u8",
+          "index": false
+        }
+      ]
+    },
+    {
+      "name": "RoundMeowed",
+      "fields": [
+        {
+          "name": "roundId",
+          "type": "u64",
+          "index": false
+        },
+        {
+          "name": "winningChoice",
+          "type": "u8",
+          "index": false
+        },
+        {
+          "name": "totalPool",
+          "type": "u64",
+          "index": false
+        },
+        {
+          "name": "winnerCount",
+          "type": "u32",
+          "index": false
+        }
+      ]
+    },
+    {
+      "name": "TreatClaimed",
+      "fields": [
+        {
+          "name": "roundId",
+          "type": "u64",
+          "index": false
+        },
+        {
+          "name": "player",
+          "type": "publicKey",
+          "index": false
+        },
+        {
+          "name": "payout",
+          "type": "u64",
+          "index": false
+        }
+      ]
+    },
+    {
+      "name": "FeeCollected",
+      "fields": [
+        {
+          "name": "roundId",
+          "type": "u64",
+          "index": false
+        },
+        {
+          "name": "feeAmount",
+          "type": "u64",
+          "index": false
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "address": "J5GgxY8zobKvjJovnENncHDLWVQ2gBPH2skhTKL8JuGz"
+  }
+}

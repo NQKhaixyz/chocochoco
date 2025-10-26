@@ -19,7 +19,17 @@ pnpm dev
 
 Fill `.env`:
 
-```
+```bash
+# Solana Configuration
+VITE_SOLANA_CLUSTER=devnet
+VITE_PROGRAM_ID=J5GgxY8zobKvjJovnENncHDLWVQ2gBPH2skhTKL8JuGz
+VITE_STAKE_LAMPORTS=1000000
+VITE_SOLANA_RPC_URL=https://api.devnet.solana.com
+
+# Indexer Service (for Leaderboard)
+VITE_INDEXER_URL=http://localhost:3001
+
+# EVM Legacy (optional)
 VITE_BASE_SEPOLIA_RPC=...
 VITE_POLYGON_MUMBAI_RPC=...
 VITE_WALLETCONNECT_PROJECT_ID=...
@@ -27,7 +37,6 @@ VITE_RPC_URL=...
 VITE_CHAIN_ID=84532
 VITE_CONTRACT_ADDRESS=0x...
 VITE_TREASURY_ADDRESS=0x...
-VITE_SUBGRAPH_URL=https://api.studio.thegraph.com/query/<slug>/<version>
 ```
 
 ## Features
@@ -48,14 +57,56 @@ VITE_SUBGRAPH_URL=https://api.studio.thegraph.com/query/<slug>/<version>
 - Toggle component in Navbar (`SoundToggle`) persists to `localStorage`
 - Place `purr.mp3` (<=200KB) under `public/assets/sfx/`
 
-## Leaderboard (Subgraph)
+## Leaderboard (Solana Indexer)
 
-- Env: `VITE_SUBGRAPH_URL`
-- Route: `/leaderboard`
-- Tables:
-  - Top Payout: aggregates Claims by player (client-side)
-  - Weekly Win-Rate: last 7 days from PlayerRounds (revealed=true), compares `side` with `round.winnerSide`
-- Pagination: prev/next via first/skip; Next enabled only when a page returns full `pageSize`.
+**Data Source**: Solana Indexer REST API (not The Graph)
+
+**Configuration**:
+- Set `VITE_INDEXER_URL` in `.env` (e.g., `http://localhost:3001`)
+- Start the indexer service: `cd ../indexer && pnpm dev`
+
+**Route**: `/leaderboard`
+
+**Features**:
+- **Top Payout (All-time)**: Shows total SOL winnings per player
+  - Columns: Rank | Player | Total (SOL)
+  - Converts lamports to SOL (6 decimals)
+  - Client-side pagination (50 per page)
+  
+- **Weekly Win-Rate (Last 7 days)**: Shows win percentage for the last 7 days
+  - Columns: Rank | Player | Wins | Total | Win-Rate (%)
+  - Win rate formatted to 1 decimal place
+  - Client-side pagination (50 per page)
+
+**API Endpoints Used**:
+- `GET /leaderboard/top-payout?limit=50&offset=0`
+- `GET /leaderboard/weekly-winrate?from=<unix>&limit=50&offset=0`
+- `GET /stats/meta` (optional, for server time)
+
+**Error Handling**:
+- Loading skeletons while fetching
+- Empty states with helpful messages
+- Retry button on network errors
+- Graceful fallback if indexer is unavailable
+
+**Starting the Indexer**:
+```bash
+# In the indexer directory
+cd ../indexer
+
+# Start Docker Desktop first, then:
+docker run --name chocochoco-postgres \
+  -e POSTGRES_PASSWORD=postgres \
+  -e POSTGRES_DB=chocochoco_indexer \
+  -p 5432:5432 \
+  -d postgres:14
+
+# Run migrations and start
+pnpm migrate
+pnpm dev
+```
+
+The frontend will automatically connect to the indexer at `VITE_INDEXER_URL`.
 
 ## Landing & Onboarding
 - Landing: route `/landing` (CTA “Play on Testnet” → `/app`).

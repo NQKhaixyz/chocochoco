@@ -1,12 +1,60 @@
-# Foundry outputs
+# Anchor
+.anchor/
+.DS_Store
+target/
+**/*.rs.bk
+node_modules/
+test-ledger/
+.yarn/
+
+# Build artifacts
+*.so
+*.dylib
+*.dll
+
+# Keypairs (NEVER commit private keys!)
+*-keypair.json
+*.key
+id.json
+
+# Environment files
+.env
+.env.*
+.env.local
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Dependencies
+node_modules/
+.pnp/
+.pnp.js
+
+# Testing
+coverage/
+.nyc_output/
+
+# Misc
+.cache/
+dist/
+build/
+
+# Old Foundry artifacts (legacy)
 out/
 broadcast/
 cache/
-
-# Local env
-.env
-.env.*
-
-# Libs (kept installed via forge install; commonly not committed)
-# If you prefer vendoring, remove these ignores.
 lib/

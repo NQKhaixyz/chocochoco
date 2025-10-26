@@ -655,6 +655,64 @@ Developer Workflow:
 
 ---
 
+## 8.7 Indexer Service (Optional - For Analytics)
+
+The indexer service listens to Solana program events and provides REST APIs for leaderboards and analytics.
+
+**Location:** `indexer/`
+
+**Features:**
+- Real-time event listening via WebSocket
+- PostgreSQL storage with automatic deduplication
+- REST APIs for leaderboard queries
+- Automatic backfill on startup
+- Helius Streams support (optional)
+
+**Quick Start:**
+
+```bash
+cd indexer
+
+# Install dependencies
+pnpm install
+
+# Configure
+cp .env.example .env
+# Edit PROGRAM_ID, DATABASE_URL, etc.
+
+# Create database
+createdb chocochoco_indexer
+
+# Run migrations
+pnpm migrate
+
+# Start indexer
+pnpm dev
+```
+
+**API Endpoints:**
+
+```bash
+# Health check
+GET http://localhost:3001/health
+
+# Top payout leaderboard
+GET http://localhost:3001/leaderboard/top-payout?limit=50
+
+# Weekly win rate
+GET http://localhost:3001/leaderboard/weekly-winrate
+
+# Get round by ID
+GET http://localhost:3001/rounds/:id
+
+# Get player rounds
+GET http://localhost:3001/player/:address/rounds?limit=50
+```
+
+**See `indexer/README.md` for complete documentation.**
+
+---
+
 ## 9. Troubleshooting
 
 ### 9.1 Solana CLI Issues

@@ -1,68 +1,239 @@
-import React, { useMemo, useState } from 'react'
-import { useTopPayout, useWeeklyWinrate } from '../hooks/useLeaderboard'
-import { LeaderboardTable } from '../components/LeaderboardTable'
-import { formatEther } from 'viem'
+import React, { useEffect, useState } from 'react';
+import { LeaderboardTable, Column } from '../components/LeaderboardTable';
+import {
+  fetchTopPayout,
+  fetchWeeklyWinRate,
+  getWeeklyTimestamp,
+  lamportsToSol,
+  formatWinRate,
+  truncateAddress,
+  TopPayoutEntry,
+  WeeklyWinRateEntry,
+} from '../lib/indexer';
+
+const PAGE_SIZE = 50;
 
 export default function LeaderboardPage() {
-  const [payoutPage, setPayoutPage] = useState(0)
-  const [winPage, setWinPage] = useState(0)
+  // Top Payout State
+  const [payoutData, setPayoutData] = useState<TopPayoutEntry[]>([]);
+  const [payoutLoading, setPayoutLoading] = useState(true);
+  const [payoutError, setPayoutError] = useState<string | null>(null);
+  const [payoutPage, setPayoutPage] = useState(1);
+  const [payoutHasMore, setPayoutHasMore] = useState(false);
 
-  const pageSizePayout = 100
-  const pageSizeWin = 500
+  // Weekly Win Rate State
+  const [winRateData, setWinRateData] = useState<WeeklyWinRateEntry[]>([]);
+  const [winRateLoading, setWinRateLoading] = useState(true);
+  const [winRateError, setWinRateError] = useState<string | null>(null);
+  const [winRatePage, setWinRatePage] = useState(1);
+  const [winRateHasMore, setWinRateHasMore] = useState(false);
+  const [weeklyFrom, setWeeklyFrom] = useState<number | undefined>();
 
-  const { rows: payoutRows, loading: payoutLoading } = useTopPayout(payoutPage, pageSizePayout)
-  const payoutView = useMemo(
-    () => payoutRows.map((r, i) => ({ rank: i + 1 + payoutPage * pageSizePayout, ...r })),
-    [payoutRows, payoutPage],
-  )
-  const payoutCanNext = payoutRows.length === pageSizePayout
+  // Load weekly timestamp on mount
+  useEffect(() => {
+    getWeeklyTimestamp().then(setWeeklyFrom);
+  }, []);
 
-  const { rows: winRows, loading: winLoading } = useWeeklyWinrate(winPage, pageSizeWin)
-  const winView = useMemo(() => winRows.map((r, i) => ({ rank: i + 1 + winPage * pageSizeWin, ...r })), [winRows, winPage])
-  const winCanNext = winRows.length === pageSizeWin
+  // Fetch Top Payout
+  useEffect(() => {
+    let mounted = true;
+
+    const loadTopPayout = async () => {
+      setPayoutLoading(true);
+      setPayoutError(null);
+
+      try {
+        const offset = (payoutPage - 1) * PAGE_SIZE;
+        const data = await fetchTopPayout({ limit: PAGE_SIZE + 1, offset });
+
+        if (!mounted) return;
+
+        setPayoutHasMore(data.length > PAGE_SIZE);
+        setPayoutData(data.slice(0, PAGE_SIZE));
+      } catch (error) {
+        if (!mounted) return;
+        setPayoutError(error instanceof Error ? error.message : 'Failed to load data');
+      } finally {
+        if (mounted) {
+          setPayoutLoading(false);
+        }
+      }
+    };
+
+    loadTopPayout();
+
+    return () => {
+      mounted = false;
+    };
+  }, [payoutPage]);
+
+  // Fetch Weekly Win Rate
+  useEffect(() => {
+    if (weeklyFrom === undefined) return;
+
+    let mounted = true;
+
+    const loadWinRate = async () => {
+      setWinRateLoading(true);
+      setWinRateError(null);
+
+      try {
+        const offset = (winRatePage - 1) * PAGE_SIZE;
+        const data = await fetchWeeklyWinRate({
+          from: weeklyFrom,
+          limit: PAGE_SIZE + 1,
+          offset,
+        });
+
+        if (!mounted) return;
+
+        setWinRateHasMore(data.length > PAGE_SIZE);
+        setWinRateData(data.slice(0, PAGE_SIZE));
+      } catch (error) {
+        if (!mounted) return;
+        setWinRateError(error instanceof Error ? error.message : 'Failed to load data');
+      } finally {
+        if (mounted) {
+          setWinRateLoading(false);
+        }
+      }
+    };
+
+    loadWinRate();
+
+    return () => {
+      mounted = false;
+    };
+  }, [winRatePage, weeklyFrom]);
+
+  // Top Payout Columns
+  const payoutColumns: Column<TopPayoutEntry>[] = [
+    {
+      key: 'rank',
+      header: '#',
+      render: (_, index) => (
+        <span className="font-medium text-gray-900 dark:text-gray-100">
+          {index + 1}
+        </span>
+      ),
+      className: 'w-16',
+    },
+    {
+      key: 'player',
+      header: 'Player',
+      render: (item) => (
+        <span className="font-mono text-gray-700 dark:text-gray-300" title={item.player}>
+          {truncateAddress(item.player, 6)}
+        </span>
+      ),
+    },
+    {
+      key: 'total',
+      header: 'Total (SOL)',
+      render: (item) => (
+        <span className="font-semibold text-blue-600 dark:text-blue-400">
+          {lamportsToSol(item.totalLamports, 6)} SOL
+        </span>
+      ),
+      className: 'text-right',
+    },
+  ];
+
+  // Weekly Win Rate Columns
+  const winRateColumns: Column<WeeklyWinRateEntry>[] = [
+    {
+      key: 'rank',
+      header: '#',
+      render: (_, index) => (
+        <span className="font-medium text-gray-900 dark:text-gray-100">
+          {index + 1}
+        </span>
+      ),
+      className: 'w-16',
+    },
+    {
+      key: 'player',
+      header: 'Player',
+      render: (item) => (
+        <span className="font-mono text-gray-700 dark:text-gray-300" title={item.player}>
+          {truncateAddress(item.player, 6)}
+        </span>
+      ),
+    },
+    {
+      key: 'wins',
+      header: 'Wins',
+      render: (item) => (
+        <span className="text-green-600 dark:text-green-400 font-medium">
+          {item.wins}
+        </span>
+      ),
+      className: 'text-center',
+    },
+    {
+      key: 'total',
+      header: 'Total',
+      render: (item) => (
+        <span className="text-gray-700 dark:text-gray-300">{item.total}</span>
+      ),
+      className: 'text-center',
+    },
+    {
+      key: 'rate',
+      header: 'Win Rate',
+      render: (item) => (
+        <span className="font-semibold text-purple-600 dark:text-purple-400">
+          {formatWinRate(item.rate)}
+        </span>
+      ),
+      className: 'text-right',
+    },
+  ];
 
   return (
-    <main className="max-w-5xl mx-auto p-6 space-y-6">
-      <h1 className="text-2xl font-bold">Leaderboard</h1>
+    <main className="max-w-6xl mx-auto p-6 space-y-8">
+      <div>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+          Leaderboard
+        </h1>
+        <p className="text-gray-600 dark:text-gray-400">
+          Top players and weekly win rates from the Solana indexer
+        </p>
+      </div>
 
+      {/* Top Payout Table */}
       <LeaderboardTable
         title="🏅 Top Payout (All-time)"
-        columns={['#', 'Player', 'Total Payout']}
-        rows={payoutView}
+        columns={payoutColumns}
+        data={payoutData}
         loading={payoutLoading}
-        pageIndex={payoutPage}
-        setPageIndex={setPayoutPage}
-        canPrev={payoutPage > 0}
-        canNext={payoutCanNext}
-        renderRow={(r: any) => (
-          <tr key={r.player} className="border-b last:border-0">
-            <td className="py-2 pr-6">{r.rank}</td>
-            <td className="py-2 pr-6 font-mono">{r.player}</td>
-            <td className="py-2 pr-6">{formatEther(r.totalPayout)} </td>
-          </tr>
-        )}
+        error={payoutError}
+        currentPage={payoutPage}
+        pageSize={PAGE_SIZE}
+        hasMore={payoutHasMore}
+        onPrevPage={() => setPayoutPage((p) => Math.max(1, p - 1))}
+        onNextPage={() => setPayoutPage((p) => p + 1)}
+        onRetry={() => setPayoutPage((p) => p)} // Trigger re-fetch
+        emptyMessage="No payout data available yet. Start playing to see winners!"
       />
 
+      {/* Weekly Win Rate Table */}
       <LeaderboardTable
         title="📈 Weekly Win-Rate (Last 7 days)"
-        columns={['#', 'Player', 'Wins', 'Total', 'Win-Rate']}
-        rows={winView}
-        loading={winLoading}
-        pageIndex={winPage}
-        setPageIndex={setWinPage}
-        canPrev={winPage > 0}
-        canNext={winCanNext}
-        renderRow={(r: any) => (
-          <tr key={r.player} className="border-b last:border-0">
-            <td className="py-2 pr-6">{r.rank}</td>
-            <td className="py-2 pr-6 font-mono">{r.player}</td>
-            <td className="py-2 pr-6">{r.wins}</td>
-            <td className="py-2 pr-6">{r.total}</td>
-            <td className="py-2 pr-6">{(r.rate * 100).toFixed(1)}%</td>
-          </tr>
-        )}
+        columns={winRateColumns}
+        data={winRateData}
+        loading={winRateLoading}
+        error={winRateError}
+        currentPage={winRatePage}
+        pageSize={PAGE_SIZE}
+        hasMore={winRateHasMore}
+        onPrevPage={() => setWinRatePage((p) => Math.max(1, p - 1))}
+        onNextPage={() => setWinRatePage((p) => p + 1)}
+        onRetry={() => setWinRatePage((p) => p)} // Trigger re-fetch
+        emptyMessage="No games played in the last 7 days. Be the first!"
       />
     </main>
-  )
+  );
 }
+
 
