@@ -11,7 +11,7 @@ export class EventListener {
   private programId: PublicKey;
 
   constructor() {
-    this.connection = new Connection(appConfig.RPC_WS_URL, {
+    this.connection = new Connection(appConfig.RPC_HTTP_URL, {
       wsEndpoint: appConfig.RPC_WS_URL,
       commitment: 'confirmed',
     });

@@ -24,9 +24,9 @@ CREATE TABLE IF NOT EXISTS rounds (
   UNIQUE(round_number)
 );
 
-CREATE INDEX idx_rounds_settled ON rounds(settled);
-CREATE INDEX idx_rounds_created_at ON rounds(created_at DESC);
-CREATE INDEX idx_rounds_slot ON rounds(slot);
+CREATE INDEX IF NOT EXISTS idx_rounds_settled ON rounds(settled);
+CREATE INDEX IF NOT EXISTS idx_rounds_created_at ON rounds(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_rounds_slot ON rounds(slot);
 
 -- ================================
 -- PLAYER_ROUNDS TABLE
@@ -50,10 +50,10 @@ CREATE TABLE IF NOT EXISTS player_rounds (
   UNIQUE(round_id, player)
 );
 
-CREATE INDEX idx_player_rounds_round_id ON player_rounds(round_id);
-CREATE INDEX idx_player_rounds_player ON player_rounds(player);
-CREATE INDEX idx_player_rounds_revealed ON player_rounds(revealed);
-CREATE INDEX idx_player_rounds_created_at ON player_rounds(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_player_rounds_round_id ON player_rounds(round_id);
+CREATE INDEX IF NOT EXISTS idx_player_rounds_player ON player_rounds(player);
+CREATE INDEX IF NOT EXISTS idx_player_rounds_revealed ON player_rounds(revealed);
+CREATE INDEX IF NOT EXISTS idx_player_rounds_created_at ON player_rounds(created_at DESC);
 
 -- ================================
 -- CLAIMS TABLE
@@ -73,9 +73,9 @@ CREATE TABLE IF NOT EXISTS claims (
   UNIQUE(tx_sig, log_index)
 );
 
-CREATE INDEX idx_claims_round_id ON claims(round_id);
-CREATE INDEX idx_claims_player ON claims(player);
-CREATE INDEX idx_claims_claimed_at ON claims(claimed_at DESC);
+CREATE INDEX IF NOT EXISTS idx_claims_round_id ON claims(round_id);
+CREATE INDEX IF NOT EXISTS idx_claims_player ON claims(player);
+CREATE INDEX IF NOT EXISTS idx_claims_claimed_at ON claims(claimed_at DESC);
 
 -- ================================
 -- TREASURY_FEES TABLE
@@ -94,8 +94,8 @@ CREATE TABLE IF NOT EXISTS treasury_fees (
   UNIQUE(tx_sig, log_index)
 );
 
-CREATE INDEX idx_treasury_fees_round_id ON treasury_fees(round_id);
-CREATE INDEX idx_treasury_fees_collected_at ON treasury_fees(collected_at DESC);
+CREATE INDEX IF NOT EXISTS idx_treasury_fees_round_id ON treasury_fees(round_id);
+CREATE INDEX IF NOT EXISTS idx_treasury_fees_collected_at ON treasury_fees(collected_at DESC);
 
 -- ================================
 -- INDEXER_STATE TABLE
@@ -130,7 +130,7 @@ FROM claims
 GROUP BY player
 ORDER BY total_payout DESC;
 
-CREATE INDEX idx_leaderboard_top_payout_player ON leaderboard_top_payout(player);
+CREATE INDEX IF NOT EXISTS idx_leaderboard_top_payout_player ON leaderboard_top_payout(player);
 
 -- Refresh function (call periodically)
 -- REFRESH MATERIALIZED VIEW leaderboard_top_payout;

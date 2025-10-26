@@ -29,7 +29,12 @@ async function main() {
     // 3. Initialize event listener
     logger.info('Initializing event listener...');
     listener = new EventListener();
-    await listener.initialize();
+    try {
+      await listener.initialize();
+    } catch (initError) {
+      logger.error({ initError, stack: (initError as Error).stack }, 'Failed to initialize listener');
+      throw initError;
+    }
 
     // 4. Start API server
     logger.info('Starting API server...');
@@ -46,7 +51,13 @@ async function main() {
     logger.info(`🎯 Program: ${appConfig.PROGRAM_ID}`);
 
   } catch (error) {
-    logger.fatal({ error }, 'Failed to start indexer');
+    logger.fatal({ 
+      error,
+      message: (error as Error).message,
+      stack: (error as Error).stack,
+      name: (error as Error).name
+    }, 'Failed to start indexer');
+    console.error('Full error:', error);
     process.exit(1);
   }
 }
