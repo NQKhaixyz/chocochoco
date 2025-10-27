@@ -11,7 +11,6 @@ const ENABLE_ADMIN = (import.meta.env.VITE_ENABLE_ADMIN as string | undefined) =
 type NavItem = { to: string; label: string; icon: Parameters<typeof Icon>[0]['name']; exact?: boolean }
 
 const baseItems: NavItem[] = [
-  { to: '/', label: 'Home', icon: 'home', exact: true },
   { to: '/join', label: 'Join', icon: 'sparkles' },
   { to: '/reveal', label: 'Reveal', icon: 'timer' },
   { to: '/claim', label: 'Claim', icon: 'treasury' },
@@ -35,7 +34,7 @@ export function Header() {
           <img src="/assets/icons/cat.svg" alt="ChocoCat" className="h-7 w-7" />
           ChocoChoco
         </NavLink>
-        <nav className="hidden items-center gap-1 md:flex">
+        <nav className="hidden items-center gap-3 md:flex">
           {navItems.map((item) => (
             <NavLink
               key={item.to}
@@ -43,7 +42,7 @@ export function Header() {
               end={item.exact}
               className={({ isActive }) =>
                 cn(
-                  'flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-muted transition hover:text-fg',
+                  'flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium text-muted transition hover:text-fg',
                   isActive && 'bg-surface text-fg shadow-soft',
                 )
               }
@@ -53,7 +52,7 @@ export function Header() {
             </NavLink>
           ))}
         </nav>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           {import.meta.env.DEV ? (
             <NavLink
               to="/styleguide"
