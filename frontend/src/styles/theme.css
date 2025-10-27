@@ -1,38 +1,166 @@
+@import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
 :root {
+  color-scheme: light;
+
+  /* Palette */
   --bg: #fffdfc;
-  --fg: #2a2a2a;
-  --muted: #6b7280;
+  --fg: #2a2633;
+  --muted: #6b6c80;
+  --muted-strong: #4d4f63;
+  --border: #e6e1ef;
+  --border-strong: #cdbce4;
+  --surface: #ffffff;
+  --surface-subtle: rgba(255, 255, 255, 0.78);
+  --card: rgba(255, 255, 255, 0.88);
+  --brand: #90edd4;
+  --brand-strong: #5fd9bd;
+  --accent: #ffd6e7;
+  --accent-strong: #ffb8d7;
 
-  --pastel-pink:   #ffd6e7;
-  --pastel-mint:   #c8f7e4;
+  --pastel-pink: #ffd6e7;
+  --pastel-mint: #c8f7e4;
   --pastel-yellow: #fff1b8;
-  --pastel-blue:   #d7ecff;
-  --pastel-lilac:  #e6dcff;
-
-  --brand: var(--pastel-mint);
-  --accent: var(--pastel-pink);
-  --card: #ffffffcc;
-  --border: #e8e8e8;
+  --pastel-blue: #d7ecff;
+  --pastel-lilac: #e6dcff;
 
   --win: #b6f2c3;
   --lose: #ffd7d7;
+
+  --gradient-brand: linear-gradient(135deg, rgba(255, 214, 231, 0.68) 0%, rgba(200, 247, 228, 0.92) 55%, rgba(215, 236, 255, 0.85) 100%);
+  --gradient-card: linear-gradient(140deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.45) 100%);
+
+  /* Typography scale (fluid) */
+  --font-sans: 'Plus Jakarta Sans', 'Inter', 'system-ui', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-display: 'Baloo 2', 'Plus Jakarta Sans', 'Fredoka', cursive;
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'SFMono-Regular', Menlo, monospace;
+
+  --step--2: clamp(0.7rem, 0.69rem + 0.02vw, 0.72rem);
+  --step--1: clamp(0.78rem, 0.74rem + 0.1vw, 0.88rem);
+  --step-0: clamp(0.94rem, 0.86rem + 0.22vw, 1.05rem);
+  --step-1: clamp(1.12rem, 0.99rem + 0.35vw, 1.32rem);
+  --step-2: clamp(1.34rem, 1.13rem + 0.54vw, 1.65rem);
+  --step-3: clamp(1.6rem, 1.31rem + 0.78vw, 2.07rem);
+  --step-4: clamp(1.92rem, 1.54rem + 1.09vw, 2.6rem);
+  --step-5: clamp(2.28rem, 1.76rem + 1.4vw, 3.25rem);
+
+  --line-tight: 1.1;
+  --line-snug: 1.25;
+  --line-relaxed: 1.5;
+
+  /* Radii */
+  --radius-xs: 0.35rem;
+  --radius-sm: 0.6rem;
+  --radius-md: 0.9rem;
+  --radius-lg: 1.35rem;
+  --radius-xl: 1.95rem;
+  --radius-xxl: 2.75rem;
+  --radius-pill: 999px;
+
+  /* Shadows */
+  --shadow-soft: 0 10px 30px rgba(31, 41, 55, 0.08);
+  --shadow-float: 0 22px 55px rgba(15, 23, 42, 0.12);
+  --shadow-inner: inset 0 1px 0 rgba(255, 255, 255, 0.65);
+
+  /* Motion */
+  --transition-base: 180ms cubic-bezier(0.2, 0.8, 0.4, 1);
+  --transition-snappy: 120ms cubic-bezier(0.4, 0.9, 0.2, 1);
+
+  /* UI scale (affects rem-based typography and spacing) */
+  --ui-scale: 1.08;
 }
 
 .dark {
+  color-scheme: dark;
   --bg: #101012;
-  --fg: #f3f4f6;
-  --muted: #9ca3af;
-
-  --card: #18181bcc;
-  --border: #2a2a2a;
+  --fg: #f7f1ff;
+  --muted: #a8adc0;
+  --muted-strong: #e0daf5;
+  --border: rgba(255, 255, 255, 0.12);
+  --border-strong: rgba(255, 255, 255, 0.26);
+  --surface: rgba(22, 22, 28, 0.9);
+  --surface-subtle: rgba(22, 22, 28, 0.75);
+  --card: rgba(24, 24, 27, 0.85);
+  --brand: #8cf5d8;
+  --brand-strong: #52d6bb;
+  --accent: #ffaccd;
+  --accent-strong: #ff7eb6;
 
   --win: #2e7d5d;
   --lose: #7d2e2e;
+
+  --shadow-soft: 0 18px 45px rgba(9, 9, 18, 0.6);
+  --shadow-float: 0 26px 75px rgba(5, 5, 12, 0.75);
 }
 
-html, body { background: var(--bg); color: var(--fg); }
+html {
+  font-size: calc(16px * var(--ui-scale));
+  background: var(--bg);
+}
+
+html,
+body {
+  background: var(--bg);
+  color: var(--fg);
+}
+
+body {
+  font-family: var(--font-sans);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-display);
+  color: var(--fg);
+  letter-spacing: -0.01em;
+}
+
+h1 {
+  font-size: var(--step-5);
+  line-height: var(--line-tight);
+}
+
+h2 {
+  font-size: var(--step-4);
+  line-height: var(--line-tight);
+}
+
+h3 {
+  font-size: var(--step-3);
+  line-height: var(--line-snug);
+}
+
+h4 {
+  font-size: var(--step-2);
+  line-height: var(--line-snug);
+}
+
+p,
+span,
+a,
+li {
+  font-size: var(--step-0);
+  line-height: var(--line-relaxed);
+}
+
+small {
+  font-size: var(--step--1);
+  line-height: var(--line-snug);
+}
+
+strong {
+  color: var(--muted-strong);
+}
 
 @media (prefers-reduced-motion: reduce) {
-  * { animation: none !important; transition: none !important; }
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
 }
-

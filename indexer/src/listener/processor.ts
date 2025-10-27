@@ -59,18 +59,23 @@ async function processRoundCreated(
   const data = event.data as any;
   if (!data) return;
 
-  const roundId = data.roundId?.toString() || '0';
-  
+  // Support both camelCase and snake_case from IDL
+  const roundId = (data.roundId || data.round_id)?.toString?.() || String(data.round_id) || '0';
+  const commitEndRaw = data.commitDeadline ?? data.commit_deadline;
+  const revealEndRaw = data.revealDeadline ?? data.reveal_deadline;
+  const stakeRaw = data.stakeLamports ?? data.stake_lamports ?? 0;
+
   await upsertRound({
     id: roundId,
-    roundNumber: BigInt(roundId),
-    commitEnd: BigInt(data.endTime?.toNumber?.() || blockTime + 3600),
-    revealEnd: BigInt(data.revealDeadline?.toNumber?.() || blockTime + 7200),
-    stakeLamports: BigInt(0),
+    // No numeric round number in program; store 0 and rely on created_at ordering
+    roundNumber: 0n,
+    commitEnd: BigInt(commitEndRaw?.toString?.() ?? commitEndRaw ?? blockTime + 3600),
+    revealEnd: BigInt(revealEndRaw?.toString?.() ?? revealEndRaw ?? blockTime + 7200),
+    stakeLamports: BigInt(stakeRaw?.toString?.() ?? stakeRaw ?? 0),
     milkCount: 0,
     cacaoCount: 0,
-    milkPool: BigInt(0),
-    cacaoPool: BigInt(0),
+    milkPool: 0n,
+    cacaoPool: 0n,
     winnerSide: null,
     settled: false,
     createdAt: blockTime,
@@ -158,20 +163,31 @@ async function processRoundMeowed(
   const data = event.data as any;
   if (!data) return;
 
-  const roundId = data.roundId?.toString() || '0';
-  const winnerSide =
-    data.winningChoice === 0 ? 'milk' : data.winningChoice === 1 ? 'cacao' : null;
+  const roundId = (data.roundId || data.round_id)?.toString?.() || String(data.round_id) || '0';
+  // Program emits Option<Tribe>; decode flexible
+  let winnerSide: 'milk' | 'cacao' | null = null;
+  const ws = data.winnerSide ?? data.winner_side;
+  if (ws != null) {
+    if (typeof ws === 'object') {
+      if (ws.milk != null) winnerSide = 'milk';
+      if (ws.cacao != null) winnerSide = 'cacao';
+    } else if (typeof ws === 'number') {
+      winnerSide = ws === 0 ? 'milk' : ws === 1 ? 'cacao' : null;
+    } else if (typeof ws === 'string') {
+      winnerSide = ws as any;
+    }
+  }
 
   await upsertRound({
     id: roundId,
-    roundNumber: BigInt(roundId),
+    roundNumber: 0n,
     commitEnd: BigInt(blockTime),
     revealEnd: BigInt(blockTime),
-    stakeLamports: BigInt(data.totalPool || 0),
+    stakeLamports: 0n,
     milkCount: 0,
     cacaoCount: 0,
-    milkPool: BigInt(0),
-    cacaoPool: BigInt(0),
+    milkPool: 0n,
+    cacaoPool: 0n,
     winnerSide,
     settled: true,
     createdAt: blockTime,

@@ -1,0 +1,208 @@
+[
+  {
+    "type": "constructor",
+    "inputs": [
+      { "internalType": "address", "name": "_treasury", "type": "address" },
+      { "internalType": "address", "name": "_stakeToken", "type": "address" },
+      { "internalType": "uint96", "name": "stake", "type": "uint96" },
+      { "internalType": "uint64", "name": "commitDur", "type": "uint64" },
+      { "internalType": "uint64", "name": "revealDur", "type": "uint64" },
+      { "internalType": "uint16", "name": "feeBps", "type": "uint16" },
+      { "internalType": "uint8", "name": "tieMode", "type": "uint8" },
+      { "internalType": "uint8", "name": "forfeitMode", "type": "uint8" },
+      { "internalType": "uint16", "name": "forfeitBps", "type": "uint16" }
+    ],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "event",
+    "name": "RoundCreated",
+    "anonymous": false,
+    "inputs": [
+      { "indexed": true, "internalType": "uint256", "name": "id", "type": "uint256" },
+      { "indexed": false, "internalType": "uint96", "name": "stake", "type": "uint96" },
+      { "indexed": false, "internalType": "uint64", "name": "commitDeadline", "type": "uint64" },
+      { "indexed": false, "internalType": "uint64", "name": "revealDeadline", "type": "uint64" },
+      { "indexed": false, "internalType": "uint16", "name": "feeBps", "type": "uint16" }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "MeowCommitted",
+    "anonymous": false,
+    "inputs": [
+      { "indexed": true, "internalType": "uint256", "name": "id", "type": "uint256" },
+      { "indexed": true, "internalType": "address", "name": "player", "type": "address" }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "MeowRevealed",
+    "anonymous": false,
+    "inputs": [
+      { "indexed": true, "internalType": "uint256", "name": "id", "type": "uint256" },
+      { "indexed": true, "internalType": "address", "name": "player", "type": "address" },
+      { "indexed": false, "internalType": "uint8", "name": "tribe", "type": "uint8" }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "RoundMeowed",
+    "anonymous": false,
+    "inputs": [
+      { "indexed": true, "internalType": "uint256", "name": "id", "type": "uint256" },
+      { "indexed": false, "internalType": "uint8", "name": "minority", "type": "uint8" }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "TreatClaimed",
+    "anonymous": false,
+    "inputs": [
+      { "indexed": true, "internalType": "uint256", "name": "id", "type": "uint256" },
+      { "indexed": true, "internalType": "address", "name": "player", "type": "address" },
+      { "indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256" }
+    ]
+  },
+  { "type": "error", "name": "CommitClosed", "inputs": [] },
+  { "type": "error", "name": "RevealClosed", "inputs": [] },
+  { "type": "error", "name": "AlreadyCommitted", "inputs": [] },
+  { "type": "error", "name": "AlreadyRevealed", "inputs": [] },
+  { "type": "error", "name": "AlreadyClaimed", "inputs": [] },
+  { "type": "error", "name": "BadStake", "inputs": [] },
+  { "type": "error", "name": "BadReveal", "inputs": [] },
+  { "type": "error", "name": "NotWinner", "inputs": [] },
+  { "type": "error", "name": "NotSettled", "inputs": [] },
+  {
+    "type": "function",
+    "stateMutability": "view",
+    "name": "currentRound",
+    "inputs": [],
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }]
+  },
+  {
+    "type": "function",
+    "stateMutability": "view",
+    "name": "currentRoundId",
+    "inputs": [],
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }]
+  },
+  {
+    "type": "function",
+    "stateMutability": "view",
+    "name": "getRound",
+    "inputs": [{ "internalType": "uint256", "name": "id", "type": "uint256" }],
+    "outputs": [
+      {
+        "components": [
+          { "internalType": "uint8", "name": "status", "type": "uint8" },
+          { "internalType": "uint64", "name": "commitDeadline", "type": "uint64" },
+          { "internalType": "uint64", "name": "revealDeadline", "type": "uint64" },
+          { "internalType": "uint96", "name": "stake", "type": "uint96" },
+          { "internalType": "uint16", "name": "feeBps", "type": "uint16" },
+          { "internalType": "uint128", "name": "poolMilk", "type": "uint128" },
+          { "internalType": "uint128", "name": "poolCacao", "type": "uint128" },
+          { "internalType": "uint64", "name": "countMilk", "type": "uint64" },
+          { "internalType": "uint64", "name": "countCacao", "type": "uint64" },
+          { "internalType": "uint8", "name": "tieMode", "type": "uint8" },
+          { "internalType": "uint8", "name": "forfeitMode", "type": "uint8" },
+          { "internalType": "uint16", "name": "forfeitBps", "type": "uint16" }
+        ],
+        "internalType": "struct IChocoChocoGame.Round",
+        "name": "",
+        "type": "tuple"
+      }
+    ]
+  },
+  {
+    "type": "function",
+    "stateMutability": "pure",
+    "name": "makeCommitment",
+    "inputs": [
+      { "internalType": "uint8", "name": "tribe", "type": "uint8" },
+      { "internalType": "bytes32", "name": "salt", "type": "bytes32" }
+    ],
+    "outputs": [{ "internalType": "bytes32", "name": "", "type": "bytes32" }]
+  },
+  {
+    "type": "function",
+    "stateMutability": "payable",
+    "name": "commitMeow",
+    "inputs": [{ "internalType": "bytes32", "name": "commitment", "type": "bytes32" }],
+    "outputs": []
+  },
+  {
+    "type": "function",
+    "stateMutability": "nonpayable",
+    "name": "revealMeow",
+    "inputs": [
+      { "internalType": "uint8", "name": "tribe", "type": "uint8" },
+      { "internalType": "bytes32", "name": "salt", "type": "bytes32" }
+    ],
+    "outputs": []
+  },
+  {
+    "type": "function",
+    "stateMutability": "nonpayable",
+    "name": "settleRound",
+    "inputs": [],
+    "outputs": []
+  },
+  {
+    "type": "function",
+    "stateMutability": "nonpayable",
+    "name": "claimTreat",
+    "inputs": [{ "internalType": "uint256", "name": "roundId", "type": "uint256" }],
+    "outputs": []
+  },
+  {
+    "type": "function",
+    "stateMutability": "view",
+    "name": "treasury",
+    "inputs": [],
+    "outputs": [{ "internalType": "address", "name": "", "type": "address" }]
+  },
+  {
+    "type": "function",
+    "stateMutability": "view",
+    "name": "stakeToken",
+    "inputs": [],
+    "outputs": [{ "internalType": "address", "name": "", "type": "address" }]
+  },
+  {
+    "type": "function",
+    "stateMutability": "nonpayable",
+    "name": "setTreasury",
+    "inputs": [{ "internalType": "address", "name": "newTreasury", "type": "address" }],
+    "outputs": []
+  },
+  {
+    "type": "function",
+    "stateMutability": "nonpayable",
+    "name": "setParamsForNext",
+    "inputs": [
+      { "internalType": "uint96", "name": "stake", "type": "uint96" },
+      { "internalType": "uint64", "name": "commitDur", "type": "uint64" },
+      { "internalType": "uint64", "name": "revealDur", "type": "uint64" },
+      { "internalType": "uint16", "name": "feeBps", "type": "uint16" },
+      { "internalType": "uint8", "name": "tieMode", "type": "uint8" },
+      { "internalType": "uint8", "name": "forfeitMode", "type": "uint8" },
+      { "internalType": "uint16", "name": "forfeitBps", "type": "uint16" }
+    ],
+    "outputs": []
+  },
+  {
+    "type": "function",
+    "stateMutability": "nonpayable",
+    "name": "pause",
+    "inputs": [],
+    "outputs": []
+  },
+  {
+    "type": "function",
+    "stateMutability": "nonpayable",
+    "name": "unpause",
+    "inputs": [],
+    "outputs": []
+  }
+]

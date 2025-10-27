@@ -17,13 +17,14 @@ async function main() {
     logger.info('Testing database connection...');
     const dbOk = await testConnection();
     if (!dbOk) {
-      throw new Error('Database connection failed');
-    }
-
-    // 2. Run migrations
-    if (appConfig.AUTO_BACKFILL) {
-      logger.info('Running database migrations...');
-      await runMigrations();
+      logger.warn('⚠️ Database connection failed - running in API-only mode');
+      // throw new Error('Database connection failed');
+    } else {
+      // 2. Run migrations
+      if (appConfig.AUTO_BACKFILL) {
+        logger.info('Running database migrations...');
+        await runMigrations();
+      }
     }
 
     // 3. Initialize event listener

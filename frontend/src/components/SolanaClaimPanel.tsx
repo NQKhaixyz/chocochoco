@@ -139,11 +139,11 @@ export default function SolanaClaimPanel() {
   return (
     <div
       id="solana-claim-panel"
-      className="max-w-xl w-full space-y-4 rounded-xl border border-border bg-card p-4 shadow-soft"
+      className="w-full space-y-5 rounded-2xl border border-border bg-card p-6 shadow-soft"
     >
-      <h2 className="text-xl font-semibold">Kết quả Round #{ROUND_ID.toString()}</h2>
+      <h2 className="text-2xl font-semibold">Kết quả Round #{ROUND_ID.toString()}</h2>
 
-      <div className="space-y-1 text-sm">
+      <div className="space-y-1 text-base">
         <div>
           Trạng thái: <span className="font-medium">{statusText}</span>
         </div>
@@ -166,17 +166,17 @@ export default function SolanaClaimPanel() {
       </div>
 
       {round?.settled && round.winnerSide != null && playerRound?.revealed && (
-        <WinLoseAnimation result={isWinner ? 'win' : 'lose'} />
+        <div className="mt-2"><WinLoseAnimation result={isWinner ? 'win' : 'lose'} /></div>
       )}
 
       <div className="flex items-center gap-3">
         <button
           onClick={onClaim}
           disabled={!canClaim || busy}
-          className="px-4 py-2 rounded-xl bg-emerald-600 text-white disabled:opacity-50 hover:bg-emerald-700 transition"
+          className="px-6 py-3 rounded-2xl text-base bg-emerald-600 text-white disabled:opacity-50 hover:bg-emerald-700 transition"
           title="Chỉ phe thắng mới claim. Đã claim sẽ bị chặn lần 2."
         >
-          {busy ? 'Claiming…' : 'Claim'}
+          {busy ? 'Claiming…' : 'Claim phần thưởng'}
         </button>
       </div>
 

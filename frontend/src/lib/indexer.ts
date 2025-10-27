@@ -139,3 +139,29 @@ export function truncateAddress(address: string, chars: number = 4): string {
   if (address.length <= chars * 2 + 3) return address;
   return `${address.slice(0, chars)}...${address.slice(-chars)}`;
 }
+
+// ===== Rounds (lightweight) =====
+export interface RoundListItem {
+  id?: string; // PDA (Base58) if provided by API
+  roundNumber?: string;
+  commitEnd: string;
+  revealEnd: string;
+  stakeLamports: string;
+  milkCount?: number;
+  cacaoCount?: number;
+  winnerSide?: string | null;
+}
+
+export async function fetchLatestRound(): Promise<RoundListItem | null> {
+  try {
+    const url = new URL('/rounds', INDEXER_BASE_URL);
+    url.searchParams.set('limit', '1');
+    const res = await fetch(url.toString());
+    if (!res.ok) return null;
+    const list = (await res.json()) as RoundListItem[];
+    return list[0] ?? null;
+  } catch (e) {
+    console.warn('fetchLatestRound failed', e);
+    return null;
+  }
+}
