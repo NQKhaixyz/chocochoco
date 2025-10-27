@@ -51,3 +51,7 @@ export async function computeCommitment(
 export function saltKey(round: string, player: string) {
   return `choco:sol:salt:${round}:${player}`
 }
+
+export function generateSalt(): `0x${string}` {
+  return `0x${toHex(randomSalt32())}`
+}

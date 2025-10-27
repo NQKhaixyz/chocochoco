@@ -11,6 +11,7 @@ import {
 } from '../lib/commit'
 import { useCommitTx } from '../hooks/useCommitTx'
 import Tooltip from './ui/Tooltip'
+import { toastDanger, toastInfo, toastSuccess } from '../lib/toast'
 
 type Props = {
   roundId: bigint
@@ -87,15 +88,23 @@ export default function CommitPanel(props: Props) {
         stakeWei,
         payable: props.payable ?? true,
       })
+      toastInfo('Commit submitted', 'Transaction sent. Waiting for confirmation…', 'just now')
     } catch (e: any) {
       setError(e?.shortMessage || e?.message || 'Commit failed')
+      toastDanger('Commit failed', e?.shortMessage || e?.message || 'Commit failed')
     }
   }
 
   const short = (a?: `0x${string}`) => (a ? `${a.slice(0, 6)}…${a.slice(-4)}` : '')
 
+  useEffect(() => {
+    if (receipt.data) {
+      toastSuccess('Commit confirmed', `Included in block ${receipt.data.blockNumber?.toString()}`)
+    }
+  }, [receipt.data])
+
   return (
-    <div id="commit-panel" className="max-w-xl w-full space-y-4 rounded-xl2 border border-border bg-card p-4 shadow-soft">
+    <div id="commit-panel" className="max-w-xl w-full space-y-4 rounded-2xl border border-border bg-card p-4 shadow-soft">
       <h2 className="text-xl font-semibold">Commit — Choose side &amp; Stake</h2>
 
       <div className="flex items-center gap-2">

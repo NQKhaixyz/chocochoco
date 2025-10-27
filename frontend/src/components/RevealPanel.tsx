@@ -78,7 +78,7 @@ export default function RevealPanel({ round, contractAddress, contractAbi, funct
   }
 
   return (
-    <div id="reveal-panel" className="max-w-xl w-full space-y-4 rounded-xl2 border border-border bg-card p-4 shadow-soft">
+    <div id="reveal-panel" className="max-w-xl w-full space-y-4 rounded-2xl border border-border bg-card p-4 shadow-soft">
       <h2 className="text-xl font-semibold">Reveal Phase</h2>
 
       <div className="text-sm">

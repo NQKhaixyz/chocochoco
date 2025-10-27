@@ -36,6 +36,7 @@ export interface ToastProps extends React.HTMLAttributes<HTMLDivElement> {
   description?: string
   variant?: ToastVariant
   timeAgo?: string
+  onDismiss?: () => void
 }
 
 export function ToastPreview({
@@ -44,6 +45,7 @@ export function ToastPreview({
   timeAgo,
   variant = 'info',
   className,
+  onDismiss,
   ...props
 }: ToastProps) {
   const style = toastStyles[variant]
@@ -68,10 +70,10 @@ export function ToastPreview({
         type="button"
         className="rounded-full p-1 text-muted transition hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
         aria-label="Dismiss toast"
+        onClick={onDismiss}
       >
         ×
       </button>
     </div>
   )
 }
-

@@ -3,6 +3,7 @@ import { Button } from '../components/ui/Button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card'
 import { Input } from '../components/ui/Input'
 import { Icon } from '../components/ui/Icon'
+import { ConnectButton } from '../components/ConnectButton'
 import { useDeadlines } from '../hooks/useSolanaRounds'
 import { formatCountdown } from '../lib/time-format'
 import { hasDeploymentConfigured } from '../lib/chocochoco-contract'
@@ -22,7 +23,7 @@ const ZERO_PLACEHOLDER = '—'
 
 export default function JoinPage() {
   const { round, roundId, commitSecondsRemaining, phase, isLoading, error } = useDeadlines()
-  const { publicKey } = useSolanaAccount()
+  const { publicKey, isConnected } = useSolanaAccount()
   
   const contractReady = hasDeploymentConfigured()
   const commitCountdown = commitSecondsRemaining !== undefined ? formatCountdown(commitSecondsRemaining, { alwaysShowHours: true }) : ZERO_PLACEHOLDER
@@ -57,6 +58,14 @@ export default function JoinPage() {
   }, [roundId, publicKey])
 
   const canCommit = !!(roundId && publicKey && tribe && phase === 'commit')
+
+  function commitDisabledReason(): string | null {
+    if (!roundId) return 'Round not ready'
+    if (!isConnected || !publicKey) return 'Connect wallet in Settings (gear icon)'
+    if (!tribe) return 'Choose a tribe'
+    if (phase !== 'commit') return 'Commit phase is closed — wait for next round'
+    return null
+  }
 
   async function handleCommit() {
     if (!roundId || !publicKey || !tribe) return
@@ -95,6 +104,17 @@ export default function JoinPage() {
                 <CardDescription>Choose tribe, keep your salt, then commit before deadline.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
+                {!isConnected ? (
+                  <div className="rounded-xl border border-brand/40 bg-brand/15 p-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="text-sm font-semibold text-on-brand">Connect wallet to continue</div>
+                      <div className="wallet-adapter-button-trigger"><ConnectButton /></div>
+                    </div>
+                    <p className="mt-1 text-xs text-on-brand/80">You can also open Settings (gear icon) to connect.</p>
+                  </div>
+                ) : null}
+                {isConnected ? (
+                <>
                 <div className="space-y-2">
                   <span className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-strong">Choose tribe</span>
                   <div className="grid gap-3 sm:grid-cols-2">
@@ -145,6 +165,9 @@ export default function JoinPage() {
                     Generate another salt
                   </Button>
                 </div>
+                {!canCommit && commitDisabledReason() ? (
+                  <p className="text-xs text-muted-strong">{commitDisabledReason()}</p>
+                ) : null}
                 {savedCommitment ? (
                   <div className="rounded-xl border border-brand/40 bg-brand/15 p-3 text-xs">
                     <div className="mb-1 font-semibold text-on-brand">Salt Vault saved</div>
@@ -155,6 +178,8 @@ export default function JoinPage() {
                   <p className="text-xs text-rose-600">Missing VITE_PROGRAM_ID. Configure Solana program env to enable live data.</p>
                 ) : null}
                 {error ? <p className="text-xs text-rose-500">Unable to load round data: {error.message}</p> : null}
+                </>
+                ) : null}
               </CardContent>
             </Card>
 
@@ -183,19 +208,24 @@ export default function JoinPage() {
                   </div>
                 </CardContent>
               </Card>
-              <Card variant="outline" className="border-dashed">
+              <Card variant="glass">
                 <CardHeader>
                   <CardTitle>Implementation checklist</CardTitle>
                   <CardDescription>Scope tracked for commit flow.</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="space-y-3">
                   {upcoming.map((item) => (
-                    <div key={item.label} className="flex items-center justify-between rounded-xl bg-surface px-4 py-3 text-sm">
+                    <div
+                      key={item.label}
+                      className="flex items-center justify-between rounded-pill border border-border bg-surface px-5 py-4 text-sm shadow-soft"
+                    >
                       <div className="flex items-center gap-3">
-                        <Icon name={item.icon} className="h-4 w-4 text-brand-strong" />
+                        <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-brand/15 text-brand-strong">
+                          <Icon name={item.icon} className="h-4 w-4" />
+                        </span>
                         <span className="font-semibold text-fg">{item.label}</span>
                       </div>
-                      <span className="text-xs uppercase tracking-[0.2em] text-muted">{item.status}</span>
+                      <span className="text-[11px] uppercase tracking-[0.22em] text-muted-strong">{item.status}</span>
                     </div>
                   ))}
                 </CardContent>

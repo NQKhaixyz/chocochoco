@@ -329,3 +329,68 @@ export function getPlayerStats(player: PublicKey): {
     totalPayoutLamports: total,
   }
 }
+
+// Simulator helper functions
+export function demoCommit(roundId: number, playerAddress: string, tribe: Tribe, saltHex: `0x${string}`) {
+  const state = loadState()
+  const round = state.rounds[roundId]
+  if (!round) throw new Error('Round not found')
+  
+  const t = nowSec()
+  if (t >= round.commitEndTime) throw new Error('Commit phase closed')
+  
+  const k = keyFor(roundId, playerAddress)
+  if (state.playerRounds[k]) throw new Error('Already committed')
+
+  // Create fake commitment
+  const commitment = saltHex.replace('0x', '')
+  
+  state.playerRounds[k] = {
+    roundId,
+    player: playerAddress,
+    commitmentHex: `0x${commitment}`,
+    tribe,
+    saltHex,
+    committedAt: Date.now(),
+    revealed: false,
+    claimed: false,
+  }
+  
+  recalcCounts(state, roundId)
+  saveState(state)
+}
+
+export function demoReveal(roundId: number, playerAddress: string, tribe: Tribe, saltHex: `0x${string}`) {
+  const state = loadState()
+  const round = state.rounds[roundId]
+  if (!round) throw new Error('Round not found')
+  
+  const k = keyFor(roundId, playerAddress)
+  const pr = state.playerRounds[k]
+  if (!pr) throw new Error('No commitment found')
+  if (pr.revealed) return
+  
+  pr.revealed = true
+  pr.revealedAt = Date.now()
+  
+  recalcCounts(state, roundId)
+  maybeSettle(state, roundId)
+  saveState(state)
+}
+
+export function getCurrentRound(): DemoRound | undefined {
+  const state = loadState()
+  maybeAdvanceRound(state)
+  saveState(state)
+  return state.rounds[state.currentRoundId]
+}
+
+export function advanceToNextRound() {
+  const state = loadState()
+  const newState = createStateWithNewRound(state)
+  saveState(newState)
+}
+
+export function clearAllDemoData() {
+  localStorage.removeItem(LS_KEY)
+}

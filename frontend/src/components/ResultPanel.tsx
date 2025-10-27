@@ -70,7 +70,7 @@ export default function ResultPanel({
   }
 
   return (
-    <div id="result-panel" className="max-w-xl w-full space-y-4 rounded-xl2 border border-border bg-card p-4 shadow-soft">
+    <div id="result-panel" className="max-w-xl w-full space-y-4 rounded-2xl border border-border bg-card p-4 shadow-soft">
       <h2 className="text-xl font-semibold">Round Results #{roundId.toString()}</h2>
 
       <div className="space-y-1 text-sm">

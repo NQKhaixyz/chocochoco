@@ -13,7 +13,7 @@ export default function WinLoseAnimation({ result }: { result: 'win' | 'lose' })
 
   const data = result === 'win' ? (winAnim as any) : (loseAnim as any)
   return (
-    <div className={`rounded-xl2 p-3 ${result === 'win' ? 'bg-win/40' : 'bg-lose/40'} animate-pop`}>
+    <div className={`rounded-2xl p-3 ${result === 'win' ? 'bg-win/40' : 'bg-lose/40'} animate-pop`}>
       <Lottie animationData={data} loop={false} style={{ height: 96 }} />
     </div>
   )
