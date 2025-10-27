@@ -21,33 +21,17 @@ pub mod chocochoco_game {
     ) -> Result<()> {
         let round = &mut ctx.accounts.round;
         let clock = Clock::get()?;
-        
-        require!(stake_lamports > 0, GameError::InvalidStake);
-        require!(commit_duration_secs > 0 && reveal_duration_secs > 0, GameError::InvalidDuration);
-        require!(fee_basis_points <= 2000, GameError::FeeTooHigh); // Max 20%
-        
-        round.status = RoundStatus::CommitOpen;
-        round.commit_deadline = clock.unix_timestamp + commit_duration_secs;
-        round.reveal_deadline = round.commit_deadline + reveal_duration_secs;
-        round.stake_lamports = stake_lamports;
-        round.fee_basis_points = fee_basis_points;
-        round.milk_count = 0;
-        round.cacao_count = 0;
-        round.milk_pool = 0;
-        round.cacao_pool = 0;
-        round.winner_side = None;
-        round.treasury = ctx.accounts.treasury.key();
-        round.bump = ctx.bumps.round;
-        
-        emit!(RoundCreated {
-            round_id: round.key(),
+
+        init_round_data(
+            round,
+            &clock,
+            commit_duration_secs,
+            reveal_duration_secs,
             stake_lamports,
-            commit_deadline: round.commit_deadline,
-            reveal_deadline: round.reveal_deadline,
             fee_basis_points,
-        });
-        
-        Ok(())
+            ctx.accounts.treasury.key(),
+            ctx.bumps.round,
+        )
     }
 
     /// Player commits their choice (hidden as hash)
@@ -160,53 +144,6 @@ pub mod chocochoco_game {
         Ok(())
     }
 
-    /// Settle the round after reveal deadline
-    /// Determines winner and transfers fee to treasury
-    pub fn settle_round(ctx: Context<SettleRound>) -> Result<()> {
-        // Compute and mutate within a scoped borrow, then release before lamports ops
-        let clock = Clock::get()?;
-        let (winner_side, fee, round_key) = {
-            let round = &mut ctx.accounts.round;
-        
-        // Check reveal deadline has passed
-        require!(clock.unix_timestamp > round.reveal_deadline, GameError::RevealNotEnded);
-        require!(round.status != RoundStatus::Settled, GameError::AlreadySettled);
-        
-            // Determine minority (winner side)
-            let winner_side = if round.milk_count == round.cacao_count {
-                None // Tie - refund everyone
-            } else if round.milk_count < round.cacao_count {
-                Some(Tribe::Milk)
-            } else {
-                Some(Tribe::Cacao)
-            };
-
-            round.winner_side = winner_side;
-            round.status = RoundStatus::Settled;
-
-            // Compute fee
-            let mut fee: u64 = 0;
-            if winner_side.is_some() {
-                let total_pool = round.milk_pool + round.cacao_pool;
-                fee = (total_pool as u128 * round.fee_basis_points as u128 / 10000) as u64;
-            }
-
-            (winner_side, fee, round.key())
-        };
-
-        if fee > 0 {
-            // Transfer fee from round PDA to treasury
-            let round_ai = ctx.accounts.round.to_account_info();
-            let treasury_ai = ctx.accounts.treasury.to_account_info();
-            **round_ai.try_borrow_mut_lamports()? -= fee;
-            **treasury_ai.try_borrow_mut_lamports()? += fee;
-        }
-        
-        emit!(RoundMeowed { round_id: round_key, winner_side });
-        
-        Ok(())
-    }
-
     /// Player claims their reward (if winner) or refund (if tie)
     /// Pull payment pattern - players must call this themselves
     pub fn claim_treat(ctx: Context<ClaimTreat>) -> Result<()> {
@@ -268,6 +205,66 @@ pub mod chocochoco_game {
         });
         
         Ok(())
+    }
+
+    /// Settle the round after reveal deadline and create new round
+    pub fn settle_round(
+        ctx: Context<SettleRound>,
+        _next_nonce: u8,
+        commit_duration_secs: i64,
+        reveal_duration_secs: i64,
+    ) -> Result<()> {
+        let clock = Clock::get()?;
+
+        // Settle current round (reusing logic from settle_round)
+        let (fee, round_key) = {
+            let round = &mut ctx.accounts.round;
+
+            require!(clock.unix_timestamp > round.reveal_deadline, GameError::RevealNotEnded);
+            require!(round.status != RoundStatus::Settled, GameError::AlreadySettled);
+
+            let winner_side = if round.milk_count == round.cacao_count {
+                None
+            } else if round.milk_count < round.cacao_count {
+                Some(Tribe::Milk)
+            } else {
+                Some(Tribe::Cacao)
+            };
+
+            round.winner_side = winner_side;
+            round.status = RoundStatus::Settled;
+
+            let mut fee: u64 = 0;
+            if winner_side.is_some() {
+                let total_pool = round.milk_pool + round.cacao_pool;
+                fee = (total_pool as u128 * round.fee_basis_points as u128 / 10000) as u64;
+            }
+
+            (fee, round.key())
+        };
+
+        if fee > 0 {
+            let round_ai = ctx.accounts.round.to_account_info();
+            let treasury_ai = ctx.accounts.treasury.to_account_info();
+            **round_ai.try_borrow_mut_lamports()? -= fee;
+            **treasury_ai.try_borrow_mut_lamports()? += fee;
+        }
+
+        emit!(RoundMeowed { round_id: round_key, winner_side: ctx.accounts.round.winner_side });
+
+        // Create next round with same stake/fee and treasury
+        let next_round = &mut ctx.accounts.next_round;
+        let prev = &ctx.accounts.round;
+        init_round_data(
+            next_round,
+            &clock,
+            commit_duration_secs,
+            reveal_duration_secs,
+            prev.stake_lamports,
+            prev.fee_basis_points,
+            prev.treasury,
+            ctx.bumps.next_round,
+        )
     }
 }
 
@@ -332,13 +329,27 @@ pub struct RevealMeow<'info> {
 }
 
 #[derive(Accounts)]
+#[instruction(next_nonce: u8)]
 pub struct SettleRound<'info> {
     #[account(mut)]
     pub round: Account<'info, Round>,
-    
-    /// CHECK: Treasury receives fees
+
     #[account(mut, address = round.treasury)]
     pub treasury: AccountInfo<'info>,
+
+    #[account(mut)]
+    pub authority: Signer<'info>,
+
+    #[account(
+        init,
+        payer = authority,
+        space = 8 + Round::INIT_SPACE,
+        seeds = [b"round", authority.key().as_ref(), &[next_nonce]],
+        bump
+    )]
+    pub next_round: Account<'info, Round>,
+
+    pub system_program: Program<'info, System>,
 }
 
 #[derive(Accounts)]
@@ -449,7 +460,7 @@ pub enum GameError {
     #[msg("Invalid duration")]
     InvalidDuration,
     
-    #[msg("Fee too high (max 20%)")]
+    #[msg("Fee too high (max 100%)")]
     FeeTooHigh,
     
     #[msg("Commit phase is closed")]
@@ -490,4 +501,42 @@ pub enum GameError {
     
     #[msg("No reward to claim")]
     NoReward,
+}
+
+fn init_round_data(
+    round: &mut Account<Round>,
+    clock: &Clock,
+    commit_duration_secs: i64,
+    reveal_duration_secs: i64,
+    stake_lamports: u64,
+    fee_basis_points: u16,
+    treasury: Pubkey,
+    bump: u8,
+) -> Result<()> {
+    require!(stake_lamports > 0, GameError::InvalidStake);
+    require!(commit_duration_secs > 0 && reveal_duration_secs > 0, GameError::InvalidDuration);
+    require!(fee_basis_points <= 10000, GameError::FeeTooHigh);
+
+    round.status = RoundStatus::CommitOpen;
+    round.commit_deadline = clock.unix_timestamp + commit_duration_secs;
+    round.reveal_deadline = round.commit_deadline + reveal_duration_secs;
+    round.stake_lamports = stake_lamports;
+    round.fee_basis_points = fee_basis_points;
+    round.milk_count = 0;
+    round.cacao_count = 0;
+    round.milk_pool = 0;
+    round.cacao_pool = 0;
+    round.winner_side = None;
+    round.treasury = treasury;
+    round.bump = bump;
+
+    emit!(RoundCreated {
+        round_id: round.key(),
+        stake_lamports,
+        commit_deadline: round.commit_deadline,
+        reveal_deadline: round.reveal_deadline,
+        fee_basis_points,
+    });
+
+    Ok(())
 }

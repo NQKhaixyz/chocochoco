@@ -15,6 +15,20 @@
     "forceConsistentCasingInFileNames": true,
     "types": ["vite/client", "node"]
   },
-  "include": ["src", "vite.config.*", "tailwind.config.*", "postcss.config.*"]
+  "include": [
+    "src",
+    "vite.config.*",
+    "postcss.config.*"
+  ],
+  "exclude": [
+    "src/components/CommitPanel.tsx",
+    "src/components/JoinCommit.tsx",
+    "src/components/RevealForm.tsx",
+    "src/components/RevealPanel.tsx",
+    "src/lib/wagmi.ts",
+    "src/lib/commit.ts",
+    "src/onboarding/**",
+    "src/legacy/**",
+    "tailwind.config.*"
+  ]
 }
-

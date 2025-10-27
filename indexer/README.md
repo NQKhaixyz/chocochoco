@@ -117,18 +117,21 @@ pnpm start
 
 Base URL: `http://localhost:3001`
 
-### Health Check
+### Health & Readiness
 
 ```bash
-GET /health
+GET /health   # basic uptime
+GET /ready    # checks DB + RPC connectivity
 ```
 
-Response:
+Example /health:
 ```json
-{
-  "status": "ok",
-  "timestamp": "2025-10-26T12:00:00.000Z"
-}
+{ "status": "ok" }
+```
+
+Example /ready:
+```json
+{ "status": "ready", "database": "connected", "rpc": "connected" }
 ```
 
 ### Top Payout Leaderboard
@@ -387,8 +390,16 @@ pnpm test             # Run tests
 
 ### Docker (Recommended)
 
-```dockerfile
-# Coming soon
+Build:
+
+```bash
+docker build -t chocochoco-indexer -f indexer/Dockerfile .
+```
+
+Run:
+
+```bash
+docker run -p 3001:3001 --env-file indexer/.env.production chocochoco-indexer
 ```
 
 ### Systemd Service (Linux)

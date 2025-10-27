@@ -2,3 +2,4 @@ packages:
   - frontend
   - contracts
   - subgraph
+  - indexer

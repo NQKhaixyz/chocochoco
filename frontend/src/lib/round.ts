@@ -1,5 +1,5 @@
 import { PublicKey, Connection } from '@solana/web3.js'
-import { u64le } from './commit'
+import { u64le } from './bytes'
 
 // TODO: replace seeds to match your program
 export function deriveRoundPda(programId: PublicKey, roundId: bigint) {
@@ -29,4 +29,3 @@ export async function fetchRoundRaw(conn: Connection, roundPda: PublicKey): Prom
   const winnerSide = settled ? data[25] : null
   return { roundId, commitEnd, revealEnd, settled, winnerSide }
 }
-

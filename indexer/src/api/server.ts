@@ -1,7 +1,9 @@
 import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
+import { Connection } from '@solana/web3.js';
 import { appConfig } from '../config.js';
 import { logger } from '../logger.js';
+import { testConnection } from '../db/pool.js';
 import {
   getTopPayout,
   getWeeklyWinRate,
@@ -27,7 +29,26 @@ export const createApiServer = (): express.Application => {
 
   // Health check
   app.get('/health', (_req, res) => {
-    res.json({ status: 'ok', timestamp: new Date().toISOString() });
+    res.json({ status: 'ok', uptime: process.uptime() });
+  });
+
+  // Readiness check
+  app.get('/ready', async (_req, res) => {
+    try {
+      // DB connectivity
+      const dbOk = await testConnection();
+      // RPC connectivity
+      const conn = new Connection(appConfig.RPC_HTTP_URL, 'confirmed');
+      await conn.getSlot();
+
+      if (!dbOk) {
+        return res.status(503).json({ status: 'not ready', database: 'disconnected', rpc: 'connected' });
+      }
+
+      return res.json({ status: 'ready', database: 'connected', rpc: 'connected' });
+    } catch (error: any) {
+      return res.status(503).json({ status: 'not ready', error: error?.message || 'unknown' });
+    }
   });
 
   // GET /leaderboard/top-payout

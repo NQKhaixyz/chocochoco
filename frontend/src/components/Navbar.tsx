@@ -1,6 +1,4 @@
 import React from 'react'
-import { ConnectButton } from './ConnectButton'
-import { NetworkSelect } from './NetworkSelect'
 import SoundToggle from './SoundToggle'
 import OnboardingToggle from './OnboardingToggle'
 
@@ -16,10 +14,8 @@ export function Navbar() {
           <a href="/leaderboard" className="text-sm text-slate-600 hover:text-slate-900">
             Leaderboard
           </a>
-          <NetworkSelect />
           <SoundToggle />
           <OnboardingToggle />
-          <ConnectButton />
         </div>
       </div>
     </header>
