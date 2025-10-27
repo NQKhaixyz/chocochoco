@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import SoundToggle from '../SoundToggle'
 import OnboardingToggle from '../OnboardingToggle'
-import ZoomControl from '../ZoomControl'
+import { ConnectButton } from '../ConnectButton'
 import { Icon } from '../ui/Icon'
 import { cn } from '../../lib/cn'
 
@@ -11,7 +11,8 @@ const ENABLE_ADMIN = (import.meta.env.VITE_ENABLE_ADMIN as string | undefined) =
 type NavItem = { to: string; label: string; icon: Parameters<typeof Icon>[0]['name']; exact?: boolean }
 
 const baseItems: NavItem[] = [
-  { to: '/', label: 'Join', icon: 'sparkles', exact: true },
+  { to: '/', label: 'Home', icon: 'home', exact: true },
+  { to: '/join', label: 'Join', icon: 'sparkles' },
   { to: '/reveal', label: 'Reveal', icon: 'timer' },
   { to: '/claim', label: 'Claim', icon: 'treasury' },
   { to: '/rounds', label: 'Rounds', icon: 'history' },
@@ -66,9 +67,11 @@ export function Header() {
               Styleguide
             </NavLink>
           ) : null}
-          <ZoomControl />
           <SoundToggle />
           <OnboardingToggle />
+          <div className="hidden md:flex">
+            <ConnectButton />
+          </div>
           <button
             type="button"
             className="flex h-9 w-9 items-center justify-center rounded-xl border border-border bg-surface text-muted transition hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 md:hidden"
@@ -115,6 +118,9 @@ export function Header() {
                 Styleguide
               </NavLink>
             ) : null}
+            <div className="rounded-xl border border-border bg-surface px-4 py-3">
+              <ConnectButton />
+            </div>
           </div>
         </nav>
       ) : null}

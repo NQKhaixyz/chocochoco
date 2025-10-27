@@ -90,7 +90,12 @@ export const testConnection = async (): Promise<boolean> => {
       return true;
     }
   } catch (error) {
-    logger.error({ error }, 'Database connection failed');
+    logger.error({ 
+      error,
+      message: (error as Error).message,
+      stack: (error as Error).stack,
+      name: (error as Error).name
+    }, 'Database connection failed');
     return false;
   }
 };

@@ -6,6 +6,12 @@ settings:
 
 importers:
 
+  .:
+    devDependencies:
+      '@rollup/rollup-win32-x64-msvc':
+        specifier: ^4.52.5
+        version: 4.52.5
+
   contracts:
     devDependencies:
       '@coral-xyz/anchor':
@@ -41,6 +47,9 @@ importers:
 
   frontend:
     dependencies:
+      '@coral-xyz/anchor':
+        specifier: ^0.32.1
+        version: 0.32.1(bufferutil@4.0.9)(encoding@0.1.13)(typescript@5.9.3)(utf-8-validate@5.0.10)
       '@solana/wallet-adapter-base':
         specifier: ^0.9.24
         version: 0.9.27(@solana/web3.js@1.98.4(bufferutil@4.0.9)(encoding@0.1.13)(typescript@5.9.3)(utf-8-validate@5.0.10))
@@ -96,6 +105,9 @@ importers:
       '@eslint/js':
         specifier: ^9.36.0
         version: 9.38.0
+      '@rollup/rollup-win32-x64-msvc':
+        specifier: ^4.52.5
+        version: 4.52.5
       '@types/node':
         specifier: ^22.0.0
         version: 22.18.12
@@ -409,6 +421,10 @@ packages:
 
   '@coral-xyz/anchor@0.31.1':
     resolution: {integrity: sha512-QUqpoEK+gi2S6nlYc2atgT2r41TT3caWr/cPUEL8n8Md9437trZ68STknq897b82p5mW0XrTBNOzRbmIRJtfsA==}
+    engines: {node: '>=17'}
+
+  '@coral-xyz/anchor@0.32.1':
+    resolution: {integrity: sha512-zAyxFtfeje2FbMA1wzgcdVs7Hng/MijPKpRijoySPCicnvcTQs/+dnPZ/cR+LcXM9v9UYSyW81uRNYZtN5G4yg==}
     engines: {node: '>=17'}
 
   '@coral-xyz/borsh@0.29.0':
@@ -7904,6 +7920,27 @@ snapshots:
       - typescript
       - utf-8-validate
 
+  '@coral-xyz/anchor@0.32.1(bufferutil@4.0.9)(encoding@0.1.13)(typescript@5.9.3)(utf-8-validate@5.0.10)':
+    dependencies:
+      '@coral-xyz/anchor-errors': 0.31.1
+      '@coral-xyz/borsh': 0.31.1(@solana/web3.js@1.98.4(bufferutil@4.0.9)(encoding@0.1.13)(typescript@5.9.3)(utf-8-validate@5.0.10))
+      '@noble/hashes': 1.8.0
+      '@solana/web3.js': 1.98.4(bufferutil@4.0.9)(encoding@0.1.13)(typescript@5.9.3)(utf-8-validate@5.0.10)
+      bn.js: 5.2.2
+      bs58: 4.0.1
+      buffer-layout: 1.2.2
+      camelcase: 6.3.0
+      cross-fetch: 3.2.0(encoding@0.1.13)
+      eventemitter3: 4.0.7
+      pako: 2.1.0
+      superstruct: 0.15.5
+      toml: 3.0.0
+    transitivePeerDependencies:
+      - bufferutil
+      - encoding
+      - typescript
+      - utf-8-validate
+
   '@coral-xyz/borsh@0.29.0(@solana/web3.js@1.98.4(bufferutil@4.0.9)(encoding@0.1.13)(typescript@5.9.3)(utf-8-validate@5.0.10))':
     dependencies:
       '@solana/web3.js': 1.98.4(bufferutil@4.0.9)(encoding@0.1.13)(typescript@5.9.3)(utf-8-validate@5.0.10)
@@ -9650,8 +9687,7 @@ snapshots:
   '@rollup/rollup-win32-x64-gnu@4.52.5':
     optional: true
 
-  '@rollup/rollup-win32-x64-msvc@4.52.5':
-    optional: true
+  '@rollup/rollup-win32-x64-msvc@4.52.5': {}
 
   '@safe-global/safe-apps-provider@0.18.6(bufferutil@4.0.9)(typescript@5.9.3)(utf-8-validate@5.0.10)(zod@4.1.12)':
     dependencies:

@@ -3,27 +3,20 @@ import { Button } from '../components/ui/Button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card'
 import { Input } from '../components/ui/Input'
 import { Icon } from '../components/ui/Icon'
-// import { useDeadlines } from '../hooks/useChocoRounds'
+import { useDeadlines } from '../hooks/useSolanaRounds'
 import { formatCountdown } from '../lib/time-format'
 import { hasDeploymentConfigured } from '../lib/chocochoco-contract'
 
 const upcoming = [
   { label: 'Salt vault', status: 'Designing vault UX', icon: 'sparkles' as const },
-  { label: 'Countdown commit', status: 'Wire useDeadlines()', icon: 'timer' as const },
-  { label: 'Commit transaction', status: 'Hook wagmi/writeContract', icon: 'treasury' as const },
+  { label: 'Countdown commit', status: 'Using Solana hooks', icon: 'timer' as const },
+  { label: 'Commit transaction', status: 'Hook Solana writeContract', icon: 'treasury' as const },
 ]
 
 const ZERO_PLACEHOLDER = '—'
 
 export default function JoinPage() {
-  // TODO: Migrate to Solana hooks
-  // const { round, roundId, commitSecondsRemaining, phase, isLoading, error } = useDeadlines()
-  const round = undefined as any
-  const roundId = undefined as any
-  const commitSecondsRemaining = undefined as any
-  const phase = 'loading' as const
-  const isLoading = true
-  const error = null as any
+  const { round, roundId, commitSecondsRemaining, phase, isLoading, error } = useDeadlines()
   
   const contractReady = hasDeploymentConfigured()
   const commitCountdown = commitSecondsRemaining !== undefined ? formatCountdown(commitSecondsRemaining, { alwaysShowHours: true }) : ZERO_PLACEHOLDER

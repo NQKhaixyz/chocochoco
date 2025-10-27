@@ -1,6 +1,7 @@
 import React from 'react'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import { AppLayout } from './components/layout/AppLayout'
+import HomePage from './routes/Home'
 import JoinPage from './routes/Join'
 import RevealPage from './routes/Reveal'
 import ClaimPage from './routes/Claim'
@@ -19,7 +20,8 @@ const router = createBrowserRouter([
     path: '/',
     element: <AppLayout />,
     children: [
-      { index: true, element: <JoinPage />, handle: { breadcrumb: 'Join' } },
+      { index: true, element: <HomePage />, handle: { breadcrumb: 'Home', hidden: true } },
+      { path: 'join', element: <JoinPage />, handle: { breadcrumb: 'Join' } },
       { path: 'reveal', element: <RevealPage />, handle: { breadcrumb: 'Reveal' } },
       { path: 'claim', element: <ClaimPage />, handle: { breadcrumb: 'Claim' } },
       { path: 'rounds', element: <RoundsPage />, handle: { breadcrumb: 'Rounds' } },

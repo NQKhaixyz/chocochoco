@@ -9,6 +9,7 @@ import {
   History,
   Info,
   LayoutDashboard,
+  Home,
   Milk,
   Menu,
   ShieldCheck,
@@ -39,6 +40,7 @@ const icons = {
   dashboard: LayoutDashboard,
   menu: Menu,
   close: X,
+  home: Home,
 } satisfies Record<string, LucideIcon>
 
 export type IconName = keyof typeof icons
