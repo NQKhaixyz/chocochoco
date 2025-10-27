@@ -5,6 +5,7 @@ import HomePage from './routes/Home'
 import JoinPage from './routes/Join'
 import RevealPage from './routes/Reveal'
 import ClaimPage from './routes/Claim'
+import ProfilePage from './routes/Profile'
 import RoundsPage from './routes/Rounds'
 import LeaderboardPage from './routes/leaderboard'
 import AdminPage from './routes/Admin'
@@ -24,6 +25,7 @@ const router = createBrowserRouter([
       { path: 'join', element: <JoinPage />, handle: { breadcrumb: 'Join' } },
       { path: 'reveal', element: <RevealPage />, handle: { breadcrumb: 'Reveal' } },
       { path: 'claim', element: <ClaimPage />, handle: { breadcrumb: 'Claim' } },
+      { path: 'profile', element: <ProfilePage />, handle: { breadcrumb: 'Profile' } },
       { path: 'rounds', element: <RoundsPage />, handle: { breadcrumb: 'Rounds' } },
       { path: 'leaderboard', element: <LeaderboardPage />, handle: { breadcrumb: 'Leaderboard' } },
       { path: 'landing', element: <Landing />, handle: { breadcrumb: 'Landing', hidden: true } },

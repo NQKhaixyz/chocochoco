@@ -17,24 +17,69 @@ const palette: Array<{ label: string; tokens: string[] }> = [
 const iconNames: IconName[] = ['cat', 'milk', 'cacao', 'treasury', 'wallet', 'timer', 'sparkles', 'success', 'info', 'alert']
 
 export default function Styleguide() {
+  const colorways = ['candy', 'ocean', 'sunset', 'lilac', 'forest'] as const
+
+  function setColorway(c: (typeof colorways)[number]) {
+    try {
+      localStorage.setItem('colorway', c)
+    } catch {}
+    document.documentElement.setAttribute('data-colorway', c)
+  }
+
   return (
     <div className="space-y-16 pb-20">
       <header className="space-y-4 rounded-2xl bg-gradient-brand px-8 py-10 shadow-float">
         <p className="inline-flex items-center gap-2 rounded-full bg-surface/70 px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-muted-strong">
           A4 · Design System
         </p>
-        <h1 className="text-4xl font-semibold text-slate-900">ChocoChoco Pastel Kit</h1>
+        <h1 className="text-4xl font-semibold text-on-brand">ChocoChoco Pastel Kit</h1>
         <p className="max-w-3xl text-base text-muted-strong">
-          Tokens, components và typography dành cho UI pastel mèo mèo. Trang này là nguồn tham chiếu nhanh cho đội FE,
-          đảm bảo các màn hình Join/Reveal/Claim dùng chung một bộ visual xuyên suốt.
+          Tokens, components and typography for a pastel cat UI. This page is a quick reference for FE to keep
+          Join/Reveal/Claim screens visually consistent.
         </p>
       </header>
+
+      <section className="space-y-4">
+        <div className="rounded-2xl border border-border bg-surface-subtle p-5 shadow-soft">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.22em] text-muted">Themes & Backgrounds</p>
+          <div className="flex flex-wrap items-center gap-2">
+            {colorways.map((c) => (
+              <button
+                key={c}
+                onClick={() => setColorway(c)}
+                className="group inline-flex items-center gap-2 rounded-xl border border-border bg-surface px-3 py-2 text-sm shadow-soft transition hover:-translate-y-[1px] hover:shadow-float focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
+                title={`Use ${c} palette`}
+              >
+                <span
+                  aria-hidden
+                  className={`
+                    h-4 w-8 rounded-md bg-gradient-to-r shadow-inner
+                    ${c === 'candy' ? 'from-pastel-pink via-pastel-mint to-pastel-blue' : ''}
+                    ${c === 'ocean' ? 'from-pastel-blue via-brand to-accent-strong' : ''}
+                    ${c === 'sunset' ? 'from-accent via-brand to-pastel-yellow' : ''}
+                    ${c === 'lilac' ? 'from-pastel-lilac via-accent to-pastel-pink' : ''}
+                    ${c === 'forest' ? 'from-pastel-mint via-brand to-pastel-yellow' : ''}
+                  `}
+                />
+                <span className="capitalize text-muted-strong group-hover:text-fg">{c}</span>
+              </button>
+            ))}
+          </div>
+          <div className="mt-5 overflow-hidden rounded-2xl bg-gradient-brand p-6 shadow-float">
+            <div className="flex items-center justify-between">
+              <h3 className="font-display text-2xl font-semibold text-on-brand animate-fade-up">Hero background preview</h3>
+              <span className="rounded-full bg-surface/70 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-muted">bg-gradient-brand</span>
+            </div>
+            <p className="mt-2 max-w-xl text-sm text-on-brand/80">Gradient adapts with the selected colorway. Use this for headers and hero sections.</p>
+          </div>
+        </div>
+      </section>
 
       <section className="space-y-6">
         <div>
           <h2 className="text-3xl font-semibold text-fg">1. Colors & Tokens</h2>
           <p className="text-sm text-muted">
-            Tất cả màu sắc được expose thông qua CSS variables (`--token`). Áp dụng bằng Tailwind class như
+            All colors are exposed as CSS variables (`--token`). Use them via Tailwind classes like
             <code className="ml-1 rounded-md bg-surface px-1 py-0.5 text-xs text-fg">bg-brand</code>.
           </p>
         </div>
@@ -154,7 +199,7 @@ export default function Styleguide() {
           <div className="space-y-2 md:col-span-2">
             <label className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-strong">Reveal Salt</label>
             <Input placeholder="0x12345..." state="error" trailingIcon="alert" />
-            <p className="text-xs text-rose-600">Salt sai hoặc chưa được lưu. Vui lòng kiểm tra lại.</p>
+            <p className="text-xs text-rose-600">Salt invalid or not saved. Please check again.</p>
           </div>
         </div>
       </section>
@@ -162,7 +207,7 @@ export default function Styleguide() {
       <section className="space-y-6">
         <div>
           <h2 className="text-3xl font-semibold text-fg">6. Cards</h2>
-          <p className="text-sm text-muted">Card glass default; tùy chọn solid/outline cho dashboard hoặc admin.</p>
+          <p className="text-sm text-muted">Card glass by default; choose solid/outline for dashboards or admin.</p>
         </div>
         <div className="grid gap-6 lg:grid-cols-3">
           <Card>
@@ -240,13 +285,13 @@ export default function Styleguide() {
         </div>
         <div className="space-y-4">
           <Alert
-            title="Deadline sắp đóng"
-            description="Còn 3 phút để commit. Sau thời gian này sẽ chuyển sang phase Reveal."
-            action={<Button size="sm">Commit ngay</Button>}
+            title="Deadline approaching"
+            description="3 minutes left to commit. Afterwards the round moves to Reveal."
+            action={<Button size="sm">Commit now</Button>}
           />
-          <Alert variant="success" title="Cats are happy!" description="Bạn vừa claim thành công 8.2 FOOD." />
-          <Alert variant="warning" title="Salt chưa được backup" description="Hãy tải file backup salt trước khi rời trang." />
-          <Alert variant="danger" title="Reveal thất bại" description="BadReveal · tribe hoặc salt không khớp với commit." />
+          <Alert variant="success" title="Cats are happy!" description="You just claimed 8.2 FOOD successfully." />
+          <Alert variant="warning" title="Salt not backed up" description="Download the salt backup file before leaving." />
+          <Alert variant="danger" title="Reveal failed" description="BadReveal · tribe or salt does not match the commit." />
         </div>
       </section>
 
@@ -258,12 +303,12 @@ export default function Styleguide() {
           </p>
         </div>
         <div className="flex flex-wrap gap-4">
-          <ToastPreview title="Commit thành công" description="Tx #0xabc… đã được xác nhận." timeAgo="vừa xong" />
+          <ToastPreview title="Commit successful" description="Tx #0xabc… has been confirmed." timeAgo="just now" />
           <ToastPreview
             variant="success"
-            title="Claim thành công"
-            description="Bạn đã nhận 12.4 FOOD."
-            timeAgo="10 giây trước"
+            title="Claim successful"
+            description="You received 12.4 FOOD."
+            timeAgo="10s ago"
           />
           <ToastPreview
             variant="warning"
@@ -273,9 +318,9 @@ export default function Styleguide() {
           />
           <ToastPreview
             variant="danger"
-            title="Tx thất bại"
-            description="CommitClosed · Vòng đã chuyển sang Reveal."
-            timeAgo="1 phút trước"
+            title="Tx failed"
+            description="CommitClosed · Round moved to Reveal."
+            timeAgo="1m ago"
           />
         </div>
       </section>

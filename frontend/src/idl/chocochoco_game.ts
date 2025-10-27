@@ -1,111 +1,29 @@
 export type ChocoChocoGame = {
-  "version": "0.1.0",
-  "name": "chocochoco_game",
-  "instructions": [
-    {
-      "name": "initializeRound",
-      "accounts": [],
-      "args": []
-    },
-    {
-      "name": "commitMeow",
-      "accounts": [],
-      "args": []
-    },
-    {
-      "name": "revealMeow",
-      "accounts": [],
-      "args": []
-    },
-    {
-      "name": "finalizeRound",
-      "accounts": [],
-      "args": []
-    },
-    {
-      "name": "claimTreat",
-      "accounts": [],
-      "args": []
-    }
-  ],
-  "accounts": [],
-  "types": [],
-  "events": [
-    {
-      "name": "RoundCreated",
-      "fields": [
-        {
-          "name": "roundId",
-          "type": "u64",
-          "index": false
-        },
-        {
-          "name": "roundAddress",
-          "type": "publicKey",
-          "index": false
-        },
-        {
-          "name": "startTime",
-          "type": "i64",
-          "index": false
-        }
-      ]
-    }
-  ]
+  address: string
+  metadata: {
+    name: string
+    version: string
+    spec: string
+    description: string
+  }
+  instructions: Array<any>
+  accounts: Array<any>
+  types: Array<any>
+  events: Array<any>
+  errors: Array<any>
 }
 
 export const IDL: ChocoChocoGame = {
-  "version": "0.1.0",
-  "name": "chocochoco_game",
-  "instructions": [
-    {
-      "name": "initializeRound",
-      "accounts": [],
-      "args": []
-    },
-    {
-      "name": "commitMeow",
-      "accounts": [],
-      "args": []
-    },
-    {
-      "name": "revealMeow",
-      "accounts": [],
-      "args": []
-    },
-    {
-      "name": "finalizeRound",
-      "accounts": [],
-      "args": []
-    },
-    {
-      "name": "claimTreat",
-      "accounts": [],
-      "args": []
-    }
-  ],
-  "accounts": [],
-  "types": [],
-  "events": [
-    {
-      "name": "RoundCreated",
-      "fields": [
-        {
-          "name": "roundId",
-          "type": "u64",
-          "index": false
-        },
-        {
-          "name": "roundAddress",
-          "type": "publicKey",
-          "index": false
-        },
-        {
-          "name": "startTime",
-          "type": "i64",
-          "index": false
-        }
-      ]
-    }
-  ]
+  address: "7i6gMYfJoAuW52SyZNoy2vYsmLrj1Ea6eRphxBaTa9oo",
+  metadata: {
+    name: "chocochoco_game",
+    version: "0.1.0",
+    spec: "0.1.0",
+    description: "ChocoChoco - On-chain minority game with commit-reveal"
+  },
+  instructions: [],
+  accounts: [],
+  types: [],
+  events: [],
+  errors: []
 }

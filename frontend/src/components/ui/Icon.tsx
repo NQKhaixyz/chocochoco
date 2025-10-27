@@ -9,6 +9,7 @@ import {
   History,
   Info,
   LayoutDashboard,
+  Settings,
   Home,
   Milk,
   Menu,
@@ -17,6 +18,7 @@ import {
   Timer,
   Trophy,
   Wallet2,
+  User,
   X,
   type LucideIcon,
 } from 'lucide-react'
@@ -41,6 +43,8 @@ const icons = {
   menu: Menu,
   close: X,
   home: Home,
+  user: User,
+  settings: Settings,
 } satisfies Record<string, LucideIcon>
 
 export type IconName = keyof typeof icons

@@ -51,15 +51,15 @@ export default function RevealForm() {
   async function onReveal() {
     try {
       setMsg(null)
-      if (!publicKey) throw new Error('Vui lòng connect ví')
-      if (!round) throw new Error('Round chưa tải xong')
-      if (Math.floor(Date.now() / 1000) >= round.revealEnd) throw new Error('Hết cửa sổ reveal')
+      if (!publicKey) throw new Error('Please connect wallet')
+      if (!round) throw new Error('Round not loaded yet')
+      if (Math.floor(Date.now() / 1000) >= round.revealEnd) throw new Error('Reveal window has expired')
 
       const rPda = deriveRoundPda(PROGRAM_ID, ROUND_ID)
       const prPda = playerRoundPda(rPda, publicKey)
 
       if (!/^[0-9a-fA-F]{64}$/.test(saltHex)) {
-        throw new Error('Salt phải là hex 32 bytes (64 hex chars)')
+        throw new Error('Salt must be 32 bytes hex (64 hex chars)')
       }
       const salt = Uint8Array.from(saltHex.match(/.{1,2}/g)!.map((h) => parseInt(h, 16)))
       const side = tribe === 'Milk' ? 0 : 1
@@ -80,7 +80,7 @@ export default function RevealForm() {
       const tx = new Transaction().add(ix)
       const sig = await sendTransaction(tx, connection, { skipPreflight: false })
 
-      setMsg({ kind: 'ok', text: `Reveal thành công! Tx: https://explorer.solana.com/tx/${sig}?cluster=${cluster}` })
+      setMsg({ kind: 'ok', text: `Reveal successful! Tx: https://explorer.solana.com/tx/${sig}?cluster=${cluster}` })
     } catch (e: any) {
       const txt = normalizeRevealError(e?.message || String(e))
       setMsg({ kind: 'err', text: txt })
@@ -104,7 +104,7 @@ export default function RevealForm() {
           </div>
         </div>
       ) : (
-        <div className="text-sm text-gray-500">Đang tải round…</div>
+        <div className="text-sm text-gray-500">Loading round…</div>
       )}
 
       <div className="flex gap-2">
@@ -145,9 +145,8 @@ export default function RevealForm() {
 }
 
 function normalizeRevealError(raw: string): string {
-  if (/hash|mismatch/i.test(raw)) return 'Hash mismatch: kiểm tra tribe & salt đã dùng khi commit'
-  if (/window|expired|deadline|time/i.test(raw)) return 'Hết cửa sổ Reveal hoặc chưa đến thời gian'
-  if (/0x1/.test(raw)) return 'Lỗi chương trình (0x1): có thể là sai thời gian hoặc account'
+  if (/hash|mismatch/i.test(raw)) return 'Hash mismatch: verify tribe & salt used at commit'
+  if (/window|expired|deadline|time/i.test(raw)) return 'Reveal window expired or not yet open'
+  if (/0x1/.test(raw)) return 'Program error (0x1): possible timing or account issue'
   return raw
 }
-

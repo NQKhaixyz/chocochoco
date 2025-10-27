@@ -12,7 +12,7 @@ export function Navbar() {
           ChocoChoco
         </a>
         <div className="flex items-center gap-3">
-          <a href="/leaderboard" className="text-sm text-slate-600 hover:text-slate-900">
+          <a href="/leaderboard" className="text-sm text-muted hover:text-fg">
             Leaderboard
           </a>
           <ZoomControl />

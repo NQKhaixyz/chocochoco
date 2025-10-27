@@ -23,8 +23,8 @@ export default function SolanaRevealPanel() {
   async function recompute() {
     try {
       setError(null)
-      if (!publicKey) throw new Error('Vui lòng connect ví Solana')
-      if (!round?.id) throw new Error('Chưa có round hiện tại')
+      if (!publicKey) throw new Error('Please connect Solana wallet')
+      if (!round?.id) throw new Error('No current round')
       const roundPk = new PublicKey(round.id)
       const salt = fromHex(saltHex)
       const c = await computeCommitment(tribe, salt, publicKey, roundPk)
@@ -39,12 +39,12 @@ export default function SolanaRevealPanel() {
       <h3 className="text-lg font-semibold">Reveal</h3>
       <div className="grid gap-3">
         <div className="text-sm text-slate-600">
-          {loading ? 'Đang tải round hiện tại…' : round?.id ? (
+          {loading ? 'Loading current round…' : round?.id ? (
             <>
-              Round hiện tại: <span className="font-mono">{round.id}</span>
+              Current round: <span className="font-mono">{round.id}</span>
             </>
           ) : (
-            <span className="text-red-600">{roundError ?? 'Không tìm thấy round hiện tại'}</span>
+            <span className="text-red-600">{roundError ?? 'Current round not found'}</span>
           )}
         </div>
         <label className="text-sm">
@@ -81,7 +81,7 @@ export default function SolanaRevealPanel() {
           </div>
         )}
         <div className="text-xs text-gray-600">
-          Gửi reveal qua instruction <code>reveal_meow</code> theo IDL (tham số: tribe, salt[32]).
+          Send reveal via <code>reveal_meow</code> instruction per the IDL (args: tribe, salt[32]).
         </div>
       </div>
     </div>

@@ -18,15 +18,15 @@ const baseStyles =
 
 const variantStyles: Record<ButtonVariant, string> = {
   primary:
-    'bg-gradient-brand text-slate-900 shadow-soft hover:-translate-y-[1px] hover:shadow-float border border-transparent focus-visible:ring-brand-strong/55',
+    'bg-gradient-brand text-on-brand shadow-soft hover:-translate-y-[1px] hover:shadow-float border border-transparent focus-visible:ring-brand-strong/55',
   secondary:
     'bg-surface-subtle text-fg border border-border-strong/70 shadow-soft hover:-translate-y-[1px] hover:shadow-float focus-visible:ring-brand/45',
   outline:
-    'bg-transparent border border-brand/60 text-brand-strong hover:bg-brand/10 hover:text-slate-900 focus-visible:ring-brand/35',
+    'bg-transparent border border-brand/60 text-brand-strong hover:bg-brand/10 hover:text-on-brand focus-visible:ring-brand/35',
   ghost:
     'bg-transparent border border-transparent text-muted hover:text-fg hover:bg-surface-subtle/80 focus-visible:ring-border-strong/35',
   danger:
-    'bg-lose/75 text-[#5d1e1e] border border-transparent hover:bg-lose focus-visible:ring-lose/50 hover:text-[#401010]',
+    'bg-lose/75 text-on-lose border border-transparent hover:bg-lose focus-visible:ring-lose/50 hover:text-on-lose',
 }
 
 const sizeStyles: Record<ButtonSize, string> = {
@@ -52,7 +52,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(function 
       {loading ? (
         <span className="flex items-center gap-2">
           <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/50 border-t-transparent" />
-          <span className="opacity-80">Đang xử lý…</span>
+          <span className="opacity-80">Processing…</span>
         </span>
       ) : (
         <>

@@ -4,7 +4,26 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>frontend</title>
+    <title>ChocoChoco</title>
+    <meta name="theme-color" content="#fffdfc" />
+    <script>
+      (function () {
+        try {
+          var stored = localStorage.getItem('theme')
+          var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+          var isDark = stored ? stored === 'dark' : prefersDark
+          if (isDark) document.documentElement.classList.add('dark')
+          else document.documentElement.classList.remove('dark')
+          var m = document.querySelector('meta[name="theme-color"]')
+          if (!m) {
+            m = document.createElement('meta')
+            m.setAttribute('name', 'theme-color')
+            document.head.appendChild(m)
+          }
+          m.setAttribute('content', isDark ? '#101012' : '#fffdfc')
+        } catch (e) {}
+      })()
+    </script>
   </head>
   <body>
     <div id="root"></div>

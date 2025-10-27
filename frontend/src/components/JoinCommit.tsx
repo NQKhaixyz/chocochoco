@@ -52,12 +52,12 @@ export default function JoinCommit() {
   async function onCommit() {
     setMsg(null)
     try {
-      if (!publicKey) throw new Error('Vui lòng connect ví')
+      if (!publicKey) throw new Error('Please connect wallet')
       setBusy(true)
 
       // 1) Load/generate salt
       const hex = ensureSalt()
-      if (!hex) throw new Error('Không thể tạo salt')
+      if (!hex) throw new Error('Unable to generate salt')
       const salt = Uint8Array.from(hex.match(/.{1,2}/g)!.map((h) => parseInt(h, 16)))
 
       // 2) Build commitment
@@ -94,9 +94,9 @@ export default function JoinCommit() {
       const tx = new Transaction().add(ixTransfer, ixCommit)
       const sig = await sendTransaction(tx, connection, { skipPreflight: false })
 
-      setMsg({ kind: 'ok', text: `Commit thành công! Tx: https://explorer.solana.com/tx/${sig}?cluster=${cluster}` })
+      setMsg({ kind: 'ok', text: `Commit successful! Tx: https://explorer.solana.com/tx/${sig}?cluster=${cluster}` })
     } catch (e: any) {
-      setMsg({ kind: 'err', text: e?.message || 'Commit thất bại' })
+      setMsg({ kind: 'err', text: e?.message || 'Commit failed' })
     } finally {
       setBusy(false)
     }
@@ -145,4 +145,3 @@ export default function JoinCommit() {
     </div>
   )
 }
-

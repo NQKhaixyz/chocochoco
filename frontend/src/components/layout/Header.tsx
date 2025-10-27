@@ -1,10 +1,9 @@
 import React, { useState } from 'react'
 import { NavLink } from 'react-router-dom'
-import SoundToggle from '../SoundToggle'
-import OnboardingToggle from '../OnboardingToggle'
-import { ConnectButton } from '../ConnectButton'
+// Theme + palette now live inside SettingsMenu
 import { Icon } from '../ui/Icon'
 import { cn } from '../../lib/cn'
+import SettingsMenu from '../SettingsMenu'
 
 const ENABLE_ADMIN = (import.meta.env.VITE_ENABLE_ADMIN as string | undefined) === 'true'
 
@@ -14,6 +13,7 @@ const baseItems: NavItem[] = [
   { to: '/join', label: 'Join', icon: 'sparkles' },
   { to: '/reveal', label: 'Reveal', icon: 'timer' },
   { to: '/claim', label: 'Claim', icon: 'treasury' },
+  { to: '/profile', label: 'Profile', icon: 'user' },
   { to: '/rounds', label: 'Rounds', icon: 'history' },
   { to: '/leaderboard', label: 'Leaderboard', icon: 'trophy' },
 ]
@@ -30,7 +30,7 @@ export function Header() {
   return (
     <header className="sticky top-0 z-40 border-b border-border/70 bg-surface-subtle/95 backdrop-blur-xl">
       <div className="container flex h-16 items-center justify-between gap-4">
-        <NavLink to="/" className="flex items-center gap-2 text-lg font-semibold text-fg" onClick={close}>
+        <NavLink to="/" className="flex shrink-0 items-center gap-2 text-lg font-semibold text-fg" onClick={close}>
           <img src="/assets/icons/cat.svg" alt="ChocoCat" className="h-7 w-7" />
           ChocoChoco
         </NavLink>
@@ -52,7 +52,7 @@ export function Header() {
             </NavLink>
           ))}
         </nav>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           {import.meta.env.DEV ? (
             <NavLink
               to="/styleguide"
@@ -66,14 +66,10 @@ export function Header() {
               Styleguide
             </NavLink>
           ) : null}
-          <SoundToggle />
-          <OnboardingToggle />
-          <div className="hidden md:flex">
-            <ConnectButton />
-          </div>
+          <SettingsMenu />
           <button
             type="button"
-            className="flex h-9 w-9 items-center justify-center rounded-xl border border-border bg-surface text-muted transition hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 md:hidden"
+            className="flex shrink-0 h-9 w-9 items-center justify-center rounded-xl border border-border bg-surface text-muted transition hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 md:hidden"
             onClick={() => setOpen((prev) => !prev)}
             aria-label="Toggle navigation"
           >
@@ -109,7 +105,7 @@ export function Header() {
                 className={({ isActive }) =>
                   cn(
                     'flex items-center gap-3 rounded-xl border border-brand/45 bg-brand/25 px-4 py-3 text-sm font-semibold text-brand-strong transition hover:bg-brand/35',
-                    isActive && 'bg-brand/55 text-slate-900',
+                    isActive && 'bg-brand/55 text-on-brand',
                   )
                 }
               >
@@ -117,9 +113,7 @@ export function Header() {
                 Styleguide
               </NavLink>
             ) : null}
-            <div className="rounded-xl border border-border bg-surface px-4 py-3">
-              <ConnectButton />
-            </div>
+            {/* Settings accessible from header only; keep mobile clean */}
           </div>
         </nav>
       ) : null}

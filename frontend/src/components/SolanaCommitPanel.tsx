@@ -17,8 +17,8 @@ export default function SolanaCommitPanel() {
   async function generate() {
     try {
       setError(null)
-      if (!publicKey) throw new Error('Vui lòng connect ví Solana')
-      if (!round?.id) throw new Error('Chưa có round hiện tại')
+      if (!publicKey) throw new Error('Please connect Solana wallet')
+      if (!round?.id) throw new Error('No current round')
       const roundPk = new PublicKey(round.id)
       const salt = randomSalt32()
       const commitment = await computeCommitment(tribe, salt, publicKey, roundPk)
@@ -38,12 +38,12 @@ export default function SolanaCommitPanel() {
       <h3 className="text-lg font-semibold">Commit</h3>
       <div className="grid gap-3">
         <div className="text-sm text-slate-600">
-          {loading ? 'Đang tải round hiện tại…' : round?.id ? (
+          {loading ? 'Loading current round…' : round?.id ? (
             <>
-              Round hiện tại: <span className="font-mono">{round.id}</span>
+              Current round: <span className="font-mono">{round.id}</span>
             </>
           ) : (
-            <span className="text-red-600">{roundError ?? 'Không tìm thấy round hiện tại'}</span>
+            <span className="text-red-600">{roundError ?? 'Current round not found'}</span>
           )}
         </div>
         <div className="flex items-center gap-4 text-sm">
@@ -87,7 +87,7 @@ export default function SolanaCommitPanel() {
           </div>
         )}
         <div className="text-xs text-gray-600">
-          Gửi commitment qua instruction <code>commit_meow</code> theo IDL. Tính năng gửi on‑chain sẽ sớm được bật.
+          Send the commitment via <code>commit_meow</code> instruction per the IDL. On‑chain sending will be enabled soon.
         </div>
       </div>
     </div>

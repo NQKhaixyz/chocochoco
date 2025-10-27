@@ -6,13 +6,13 @@ export default function HowItWorks() {
       <h2 className="text-xl font-semibold">How it works</h2>
       <ol className="list-decimal pl-5 space-y-2 text-sm">
         <li>
-          Commit: chọn phe + stake, tạo salt cục bộ, gửi <code>commitMeow</code>.
+          Commit: choose a tribe + stake, generate local salt, call <code>commitMeow</code>.
         </li>
         <li>
-          Reveal: trong cửa sổ cho phép, gửi <code>revealMeow(choice, salt)</code>.
+          Reveal: within the allowed window, call <code>revealMeow(choice, salt)</code>.
         </li>
         <li>
-          Claim: nếu thuộc phe thiểu số, dùng <code>claimTreat</code> nhận thưởng.
+          Claim: if on the minority side, call <code>claimTreat</code> to receive rewards.
         </li>
       </ol>
       <div className="flex gap-3">
@@ -26,4 +26,3 @@ export default function HowItWorks() {
     </section>
   )
 }
-

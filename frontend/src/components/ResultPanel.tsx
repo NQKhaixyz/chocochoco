@@ -46,10 +46,10 @@ export default function ResultPanel({
   const { claim, txHash, isPending, writeError, receipt } = useClaimTreat()
 
   const statusText = useMemo(() => {
-    if (!rr.isSettled) return 'Round chưa chốt kết quả'
-    if (rr.playerSide == null) return 'Bạn không tham gia round này'
-    if (rr.winnerSide == null) return 'Chưa xác định phe thắng (hoà)'
-    return rr.playerSide === rr.winnerSide ? 'Bạn thuộc phe THẮNG 🎉' : 'Bạn thuộc phe THUA'
+    if (!rr.isSettled) return 'Round not settled yet'
+    if (rr.playerSide == null) return 'You did not join this round'
+    if (rr.winnerSide == null) return 'Winner not determined (tie)'
+    return rr.playerSide === rr.winnerSide ? 'You are on the WINNING side 🎉' : 'You are on the LOSING side'
   }, [rr.isSettled, rr.playerSide, rr.winnerSide])
 
   const canClaim = rr.isSettled && rr.isWinner && !rr.hasClaimed && isConnected
@@ -71,11 +71,11 @@ export default function ResultPanel({
 
   return (
     <div id="result-panel" className="max-w-xl w-full space-y-4 rounded-xl2 border border-border bg-card p-4 shadow-soft">
-      <h2 className="text-xl font-semibold">Kết quả Round #{roundId.toString()}</h2>
+      <h2 className="text-xl font-semibold">Round Results #{roundId.toString()}</h2>
 
       <div className="space-y-1 text-sm">
         <div>
-          Trạng thái: <span className="font-medium">{statusText}</span>
+          Status: <span className="font-medium">{statusText}</span>
         </div>
         {rr.isSettled && rr.winnerSide != null && (
           <div>
@@ -84,10 +84,10 @@ export default function ResultPanel({
         )}
         {rr.playerSide != null && (
           <div>
-            Bạn chọn: <span className="font-mono">{rr.playerSide === 1 ? 'Milk' : rr.playerSide === 2 ? 'Cacao' : 'None'}</span>
+            Your choice: <span className="font-mono">{rr.playerSide === 1 ? 'Milk' : rr.playerSide === 2 ? 'Cacao' : 'None'}</span>
           </div>
         )}
-        {rr.hasClaimed && <div className="text-green-700">Đã nhận thưởng ✅</div>}
+        {rr.hasClaimed && <div className="text-green-700">Claimed ✅</div>}
       </div>
 
       {rr.isSettled && rr.winnerSide != null && (
@@ -95,7 +95,7 @@ export default function ResultPanel({
       )}
 
       <div className="flex items-center gap-3">
-        <Tooltip tip="Chỉ phe thắng mới claim. Đã claim sẽ bị chặn lần 2.">
+        <Tooltip tip="Only the winning side can claim. Double-claim prevented.">
           <button onClick={onClaim} disabled={!canClaim || isPending} className="px-4 py-2 rounded-xl bg-emerald-600 text-white disabled:opacity-50">
             {isPending ? 'Claiming…' : 'Claim'}
           </button>
@@ -107,12 +107,12 @@ export default function ResultPanel({
         )}
       </div>
 
-      {!rr.isSettled && <Toast kind="info" msg="⏳ Chờ round được chốt (RoundMeowed)..." />}
-      {rr.isSettled && !rr.isWinner && <Toast kind="info" msg="ℹ️ Chỉ phe thắng mới claim được." />}
-      {rr.isSettled && rr.isWinner && rr.hasClaimed && <Toast kind="success" msg="🎉 Bạn đã claim rồi." />}
+      {!rr.isSettled && <Toast kind="info" msg="⌛ Waiting for round to settle (RoundMeowed)..." />}
+      {rr.isSettled && !rr.isWinner && <Toast kind="info" msg="ℹ️ Only the winning side can claim." />}
+      {rr.isSettled && rr.isWinner && rr.hasClaimed && <Toast kind="success" msg="🎉 You have already claimed." />}
       {writeError && <Toast kind="error" msg={(writeError as any).shortMessage || (writeError as any).message} />}
       {receipt.data && (
-        <Toast kind="success" msg={`✅ Claim thành công ở block ${receipt.data.blockNumber?.toString()}`} />
+        <Toast kind="success" msg={`✅ Claim successful at block ${receipt.data.blockNumber?.toString()}`} />
       )}
     </div>
   )

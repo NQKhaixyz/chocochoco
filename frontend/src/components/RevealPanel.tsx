@@ -45,23 +45,23 @@ export default function RevealPanel({ round, contractAddress, contractAbi, funct
   const friendlyError = useMemo(() => {
     const msg = (writeError as any)?.shortMessage || (writeError as any)?.message || ''
     if (!msg) return null
-    if (/BadReveal|mismatch/i.test(msg)) return '❌ Sai salt hoặc phe đã chọn.'
-    if (/RevealClosed|window|deadline|closed/i.test(msg)) return '⏰ Không trong thời gian reveal.'
+    if (/BadReveal|mismatch/i.test(msg)) return '✖ Wrong salt or tribe.'
+    if (/RevealClosed|window|deadline|closed/i.test(msg)) return '⏰ Not in the reveal window.'
     return null
   }, [writeError])
 
   async function onReveal() {
     setErrMsg(null)
     if (!isConnected || !address) {
-      setErrMsg('Vui lòng kết nối ví')
+      setErrMsg('Please connect wallet')
       return
     }
     if (!salt) {
-      setErrMsg('Không tìm thấy salt. Có thể bạn chưa commit hoặc đã xoá cache.')
+      setErrMsg('Salt not found. You may not have committed or cleared your cache.')
       return
     }
     if (!canReveal) {
-      setErrMsg('Không trong thời gian reveal')
+      setErrMsg('Not in the reveal window')
       return
     }
 
@@ -70,9 +70,9 @@ export default function RevealPanel({ round, contractAddress, contractAbi, funct
     try {
       await writeContract({ address: contractAddress, abi: contractAbi, functionName: fn, args: [choice, salt] })
     } catch (e: any) {
-      const msg = e?.shortMessage || e?.message || 'Reveal thất bại'
-      if (/BadReveal|mismatch/i.test(msg)) setErrMsg('❌ Sai salt hoặc phe đã chọn.')
-      else if (/RevealClosed|window|deadline|closed/i.test(msg)) setErrMsg('⏰ Không trong thời gian reveal.')
+      const msg = e?.shortMessage || e?.message || 'Reveal failed'
+      if (/BadReveal|mismatch/i.test(msg)) setErrMsg('✖ Wrong salt or tribe.')
+      else if (/RevealClosed|window|deadline|closed/i.test(msg)) setErrMsg('⏰ Not in the reveal window.')
       else setErrMsg(msg)
     }
   }
@@ -99,7 +99,7 @@ export default function RevealPanel({ round, contractAddress, contractAbi, funct
       <div className="text-sm font-mono break-all">Salt: {salt ?? '—'}</div>
 
       <div className="mt-3">
-        <Tooltip tip="Chỉ bấm trong thời gian Reveal, dùng đúng salt.">
+        <Tooltip tip="Only click during the Reveal window, and use the correct salt.">
           <button onClick={onReveal} disabled={isPending || tooEarly || expired} className="px-4 py-2 rounded-xl bg-indigo-600 text-white disabled:opacity-50">
             {isPending ? 'Revealing…' : expired ? 'Expired' : tooEarly ? 'Not open yet' : 'Reveal'}
           </button>

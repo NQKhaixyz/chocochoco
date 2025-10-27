@@ -8,11 +8,11 @@ export default function Hero() {
         <h1 className="text-3xl md:text-4xl font-bold">ChocoChoco — Commit, Reveal &amp; Claim</h1>
       </div>
       <p className="text-lg text-muted">
-        Chọn phe <span className="font-semibold">Milk</span> hoặc <span className="font-semibold">Cacao</span>. Phe
-        <span className="underline"> thiểu số</span> sẽ thắng! ⏱️ Reveal đúng giờ, 🏆 claim phần thưởng.
+        Pick <span className="font-semibold">Milk</span> or <span className="font-semibold">Cacao</span>. The
+        <span className="underline"> minority</span> wins! ⏱️ Reveal on time, 🏆 claim rewards.
       </p>
       <div className="flex justify-center gap-3">
-        <a href="/app" className="px-5 py-3 rounded-xl bg-brand text-black shadow-soft hover:opacity-90">
+        <a href="/app" className="px-5 py-3 rounded-xl bg-brand text-on-brand shadow-soft hover:opacity-90">
           Play on Testnet
         </a>
         <a href="/README.md" className="px-5 py-3 rounded-xl border border-border bg-card hover:opacity-90">
@@ -22,4 +22,3 @@ export default function Hero() {
     </section>
   )
 }
-

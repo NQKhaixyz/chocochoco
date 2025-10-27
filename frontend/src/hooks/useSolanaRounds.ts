@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useConnection } from '@solana/wallet-adapter-react'
 import { PublicKey } from '@solana/web3.js'
+import * as demo from '../lib/demo-rounds'
 
 const PROGRAM_ID = new PublicKey(
   import.meta.env.VITE_PROGRAM_ID || 'J5GgxY8zobKvjJovnENncHDLWVQ2gBPH2skhTKL8JuGz'
@@ -30,10 +31,31 @@ export function useCurrentRoundId() {
   const [error, setError] = useState<Error | null>(null)
 
   useEffect(() => {
-    // TODO: Fetch from program global state PDA
-    // For now, return mock data
-    setIsLoading(false)
-    setRoundId(1)
+    let cancelled = false
+    setIsLoading(true)
+    try {
+      const id = demo.getCurrentRoundId()
+      if (!cancelled) {
+        setRoundId(id)
+        setIsLoading(false)
+      }
+    } catch (e: any) {
+      if (!cancelled) {
+        setError(e instanceof Error ? e : new Error(String(e)))
+        setIsLoading(false)
+      }
+    }
+    // poll a bit so demo can advance rounds automatically
+    const iv = setInterval(() => {
+      try {
+        const id = demo.getCurrentRoundId()
+        if (!cancelled) setRoundId(id)
+      } catch {}
+    }, 1000)
+    return () => {
+      cancelled = true
+      clearInterval(iv)
+    }
   }, [connection])
 
   return { roundId, isLoading, error }
@@ -55,23 +77,41 @@ export function useRound(roundId: number | undefined) {
       return
     }
 
-    // TODO: Fetch from program round PDA
-    // For now, return mock data
-    const mockRound: Round = {
-      roundId,
-      startTime: Date.now() / 1000,
-      commitEndTime: Date.now() / 1000 + 3600, // 1 hour from now
-      revealEndTime: Date.now() / 1000 + 7200, // 2 hours from now
-      finalizeTime: Date.now() / 1000 + 10800, // 3 hours from now
-      countMilk: 5,
-      countCacao: 3,
-      stake: BigInt(5_000_000_000), // 5 SOL in lamports
-      feeBps: 250, // 2.5%
-      isFinalized: false,
+    let cancelled = false
+    setIsLoading(true)
+    const update = () => {
+      try {
+        const d = demo.getRound(roundId)
+        if (!d) return
+        const r: Round = {
+          roundId: d.id,
+          startTime: d.startTime,
+          commitEndTime: d.commitEndTime,
+          revealEndTime: d.revealEndTime,
+          finalizeTime: d.finalizeTime,
+          countMilk: d.countMilk,
+          countCacao: d.countCacao,
+          stake: d.stakeLamports,
+          feeBps: d.feeBps,
+          isFinalized: d.isFinalized,
+        }
+        if (!cancelled) {
+          setRound(r)
+          setIsLoading(false)
+        }
+      } catch (e: any) {
+        if (!cancelled) {
+          setError(e instanceof Error ? e : new Error(String(e)))
+          setIsLoading(false)
+        }
+      }
     }
-
-    setRound(mockRound)
-    setIsLoading(false)
+    update()
+    const iv = setInterval(update, 1000)
+    return () => {
+      cancelled = true
+      clearInterval(iv)
+    }
   }, [connection, roundId])
 
   return { round, isLoading, error }

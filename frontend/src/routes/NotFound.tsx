@@ -12,11 +12,11 @@ export default function NotFound() {
         </CardHeader>
         <CardContent className="space-y-6">
           <p className="text-sm text-muted">
-            Trang bạn tìm không tồn tại. Quay lại home để tiếp tục commit cùng mèo nhé.
+            The page you’re looking for doesn’t exist. Go back home to keep committing with the cats.
           </p>
           <Link to="/">
             <Button size="lg" leftIcon="cat">
-              Về trang chính
+              Back to Home
             </Button>
           </Link>
         </CardContent>

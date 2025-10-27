@@ -3,9 +3,9 @@ import React, { useState } from 'react'
 import { useOnboarding } from './useOnboarding'
 
 const steps = [
-  { id: 'commit', selector: '#commit-panel', text: 'Bước 1: Chọn phe + stake rồi Commit.' },
-  { id: 'reveal', selector: '#reveal-panel', text: 'Bước 2: Khi tới Reveal, gửi choice + salt.' },
-  { id: 'claim', selector: '#result-panel', text: 'Bước 3: Nếu thắng (minority), Claim payout.' },
+  { id: 'commit', selector: '#commit-panel', text: 'Step 1: Choose a tribe + stake, then Commit.' },
+  { id: 'reveal', selector: '#reveal-panel', text: 'Step 2: When Reveal opens, submit choice + salt.' },
+  { id: 'claim', selector: '#result-panel', text: 'Step 3: If you win (minority), claim payout.' },
 ]
 
 export default function CoachMarks() {
@@ -19,7 +19,7 @@ export default function CoachMarks() {
         <div className="text-sm">{step.text}</div>
         <div className="mt-2 flex justify-between text-xs">
           <button className="px-2 py-1 rounded border" onClick={() => set(false)}>
-            Tắt hướng dẫn
+            Turn off tips
           </button>
           <div className="space-x-2">
             <button className="px-2 py-1 rounded border" disabled={i === 0} onClick={() => setI(i - 1)}>
@@ -29,7 +29,7 @@ export default function CoachMarks() {
               className="px-2 py-1 rounded border bg-brand"
               onClick={() => (i < steps.length - 1 ? setI(i + 1) : set(false))}
             >
-              {i < steps.length - 1 ? 'Next' : 'Hoàn tất'}
+              {i < steps.length - 1 ? 'Next' : 'Done'}
             </button>
           </div>
         </div>
@@ -37,4 +37,3 @@ export default function CoachMarks() {
     </div>
   )
 }
-

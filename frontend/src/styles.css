@@ -46,3 +46,15 @@
   }
 }
 
+/* Wallet adapter button tweaks to avoid layout overflow in header */
+.wallet-adapter-button,
+.wallet-adapter-dropdown {
+  border-radius: 0.75rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  height: 36px;
+  white-space: nowrap;
+}
+.wallet-adapter-button-trigger {
+  display: inline-flex;
+}

@@ -12,7 +12,7 @@ export const PROGRAM_ID = new PublicKey(
  * Get the Anchor program instance
  */
 export function getProgram(provider: AnchorProvider): Program<ChocoChocoGame> {
-  return new Program(IDL as any, provider)
+  return new Program(IDL, provider)
 }
 
 /**

@@ -26,6 +26,12 @@ export default {
         fg: 'var(--fg)',
         muted: 'var(--muted)',
         'muted-strong': 'var(--muted-strong)',
+        on: {
+          brand: 'var(--on-brand)',
+          accent: 'var(--on-accent)',
+          win: 'var(--on-win)',
+          lose: 'var(--on-lose)',
+        },
         brand: {
           DEFAULT: 'var(--brand)',
           strong: 'var(--brand-strong)',
@@ -79,6 +85,10 @@ export default {
           '0%': { transform: 'scale(.96)', opacity: 0.6 },
           '100%': { transform: 'scale(1)', opacity: 1 },
         },
+        fadeUp: {
+          '0%': { transform: 'translateY(6px)', opacity: 0 },
+          '100%': { transform: 'translateY(0)', opacity: 1 },
+        },
         confetti: {
           '0%': { transform: 'translateY(-20px)', opacity: 0 },
           '100%': { transform: 'translateY(0)', opacity: 1 },
@@ -92,12 +102,18 @@ export default {
           '0%': { backgroundPosition: '0% 50%' },
           '100%': { backgroundPosition: '100% 50%' },
         },
+        floaty: {
+          '0%,100%': { transform: 'translateY(0)' },
+          '50%': { transform: 'translateY(-4px)' },
+        },
       },
       animation: {
         pop: 'pop .24s ease-out',
+        'fade-up': 'fadeUp .36s ease-out',
         confetti: 'confetti .4s ease-out',
         shake: 'shake .28s ease-in-out',
         shimmer: 'shimmer 1.4s var(--transition-base) infinite',
+        float: 'floaty 4.2s ease-in-out infinite',
       },
       boxShadow: {
         soft: 'var(--shadow-soft)',

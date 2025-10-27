@@ -73,12 +73,12 @@ export default function SolanaClaimPanel() {
   async function onClaim() {
     try {
       setMsg(null)
-      if (!publicKey) throw new Error('Vui lòng connect ví')
-      if (!round) throw new Error('Round chưa tải xong')
-      if (!playerRound) throw new Error('Bạn chưa tham gia round')
-      if (!round.settled) throw new Error('Round chưa chốt kết quả')
-      if (!isWinner) throw new Error('Chỉ phe thắng mới claim được')
-      if (playerRound.claimed) throw new Error('Bạn đã claim rồi')
+      if (!publicKey) throw new Error('Please connect wallet')
+      if (!round) throw new Error('Round not loaded yet')
+      if (!playerRound) throw new Error('You did not join the round')
+      if (!round.settled) throw new Error('Round not settled yet')
+      if (!isWinner) throw new Error('Only the winning side can claim')
+      if (playerRound.claimed) throw new Error('You have already claimed')
 
       setBusy(true)
 
@@ -102,7 +102,7 @@ export default function SolanaClaimPanel() {
 
       setMsg({
         kind: 'ok',
-        text: `Claim thành công! Tx: https://explorer.solana.com/tx/${sig}?cluster=${cluster}`,
+        text: `Claim successful! Tx: https://explorer.solana.com/tx/${sig}?cluster=${cluster}`,
       })
 
       // Trigger re-fetch
@@ -116,12 +116,12 @@ export default function SolanaClaimPanel() {
   }
 
   const statusText = useMemo(() => {
-    if (!round) return 'Đang tải round...'
-    if (!round.settled) return 'Round chưa chốt kết quả'
-    if (!playerRound) return 'Bạn không tham gia round này'
-    if (!playerRound.revealed) return 'Bạn chưa reveal'
-    if (round.winnerSide == null) return 'Chưa xác định phe thắng (hoà)'
-    return isWinner ? 'Bạn thuộc phe THẮNG 🎉' : 'Bạn thuộc phe THUA'
+    if (!round) return 'Loading round...'
+    if (!round.settled) return 'Round not settled yet'
+    if (!playerRound) return 'You did not join this round'
+    if (!playerRound.revealed) return 'You have not revealed'
+    if (round.winnerSide == null) return 'Winner not determined (tie)'
+    return isWinner ? 'You are on the WINNING side 🎉' : 'You are on the LOSING side'
   }, [round, playerRound, isWinner])
 
   const winnerSideText = useMemo(() => {
@@ -141,11 +141,11 @@ export default function SolanaClaimPanel() {
       id="solana-claim-panel"
       className="w-full space-y-5 rounded-2xl border border-border bg-card p-6 shadow-soft"
     >
-      <h2 className="text-2xl font-semibold">Kết quả Round #{ROUND_ID.toString()}</h2>
+      <h2 className="text-2xl font-semibold">Round Results #{ROUND_ID.toString()}</h2>
 
       <div className="space-y-1 text-base">
         <div>
-          Trạng thái: <span className="font-medium">{statusText}</span>
+          Status: <span className="font-medium">{statusText}</span>
         </div>
         {round?.settled && round.winnerSide != null && (
           <div>
@@ -155,12 +155,12 @@ export default function SolanaClaimPanel() {
         {playerRound && (
           <>
             <div>
-              Bạn chọn: <span className="font-mono">{playerSideText}</span>
+              Your choice: <span className="font-mono">{playerSideText}</span>
             </div>
             <div>
               Revealed: <span className="font-mono">{playerRound.revealed ? '✅' : '❌'}</span>
             </div>
-            {playerRound.claimed && <div className="text-green-700">Đã nhận thưởng ✅</div>}
+            {playerRound.claimed && <div className="text-green-700">Claimed ✅</div>}
           </>
         )}
       </div>
@@ -174,22 +174,22 @@ export default function SolanaClaimPanel() {
           onClick={onClaim}
           disabled={!canClaim || busy}
           className="px-6 py-3 rounded-2xl text-base bg-emerald-600 text-white disabled:opacity-50 hover:bg-emerald-700 transition"
-          title="Chỉ phe thắng mới claim. Đã claim sẽ bị chặn lần 2."
+          title="Only the winning side can claim. Double-claim prevented."
         >
-          {busy ? 'Claiming…' : 'Claim phần thưởng'}
+          {busy ? 'Claiming…' : 'Claim rewards'}
         </button>
       </div>
 
       {/* Toast messages */}
-      {!round?.settled && <Toast kind="info" text="⏳ Chờ round được chốt (RoundMeowed)..." />}
+      {!round?.settled && <Toast kind="info" text="⌛ Waiting for round to settle (RoundMeowed)..." />}
       {round?.settled && playerRound && !playerRound.revealed && (
-        <Toast kind="info" text="ℹ️ Bạn cần reveal trước khi claim." />
+        <Toast kind="info" text="ℹ️ You need to reveal before claiming." />
       )}
       {round?.settled && isWinner && playerRound?.claimed && (
-        <Toast kind="ok" text="🎉 Bạn đã claim rồi." />
+        <Toast kind="ok" text="🎉 You have already claimed." />
       )}
       {round?.settled && playerRound?.revealed && !isWinner && (
-        <Toast kind="info" text="ℹ️ Chỉ phe thắng mới claim được." />
+        <Toast kind="info" text="ℹ️ Only the winning side can claim." />
       )}
       {msg && <Toast kind={msg.kind} text={msg.text} />}
 
@@ -207,10 +207,10 @@ function Toast({ kind, text }: { kind: 'ok' | 'err' | 'info'; text: string }) {
 }
 
 function normalizeClaimError(raw: string): string {
-  if (/already claimed|double.?claim/i.test(raw)) return 'Bạn đã claim rồi (double-claim blocked)'
+  if (/already claimed|double.?claim/i.test(raw)) return 'You have already claimed (double-claim blocked)'
   if (/not.*winner|wrong.*side|not.*eligible/i.test(raw))
-    return 'Chỉ phe thắng mới claim được'
-  if (/not.*settled|not.*finalized/i.test(raw)) return 'Round chưa chốt kết quả'
-  if (/0x1/.test(raw)) return 'Lỗi chương trình (0x1): kiểm tra state/account'
+    return 'Only the winning side can claim'
+  if (/not.*settled|not.*finalized/i.test(raw)) return 'Round not settled yet'
+  if (/0x1/.test(raw)) return 'Program error (0x1): check state/account'
   return raw
 }

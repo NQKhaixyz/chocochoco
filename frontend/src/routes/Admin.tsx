@@ -12,7 +12,7 @@ export default function AdminPage() {
       <Alert
         variant="warning"
         title="Admin panel is disabled"
-        description="Thêm VITE_ENABLE_ADMIN=true vào .env để bật route này trong môi trường dev."
+        description="Set VITE_ENABLE_ADMIN=true in .env to enable this route in dev."
       />
     )
   }
@@ -22,7 +22,7 @@ export default function AdminPage() {
       <Card>
         <CardHeader>
           <CardTitle>Round parameters</CardTitle>
-          <CardDescription>Cấu hình cho vòng tiếp theo (setParamsForNext).</CardDescription>
+          <CardDescription>Configure parameters for the next round (setParamsForNext).</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
@@ -54,10 +54,9 @@ export default function AdminPage() {
       </div>
       <Alert
         variant="danger"
-        title="Cảnh báo"
-        description="Tính năng admin sẽ gắn với quyền owner và yêu cầu confirm trước khi gửi giao dịch."
+        title="Warning"
+        description="Admin actions require owner privileges and confirmation before sending transactions."
       />
     </div>
   )
 }
-

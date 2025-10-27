@@ -61,15 +61,15 @@ export default function CommitPanel(props: Props) {
   const onCommit = async () => {
     setError(null)
     if (!isConnected || !address) {
-      setError('Vui lòng kết nối ví')
+      setError('Please connect wallet')
       return
     }
     if (!saltHex) {
-      setError('Không tạo được salt')
+      setError('Unable to generate salt')
       return
     }
     if (stakeWei <= 0n) {
-      setError('Stake phải > 0')
+      setError('Stake must be > 0')
       return
     }
 
@@ -88,7 +88,7 @@ export default function CommitPanel(props: Props) {
         payable: props.payable ?? true,
       })
     } catch (e: any) {
-      setError(e?.shortMessage || e?.message || 'Commit thất bại')
+      setError(e?.shortMessage || e?.message || 'Commit failed')
     }
   }
 
@@ -96,10 +96,10 @@ export default function CommitPanel(props: Props) {
 
   return (
     <div id="commit-panel" className="max-w-xl w-full space-y-4 rounded-xl2 border border-border bg-card p-4 shadow-soft">
-      <h2 className="text-xl font-semibold">Commit — Chọn phe &amp; Stake</h2>
+      <h2 className="text-xl font-semibold">Commit — Choose side &amp; Stake</h2>
 
       <div className="flex items-center gap-2">
-        <span className="text-sm text-muted">Phe:</span>
+        <span className="text-sm text-muted">Side:</span>
         {(['Milk', 'Cacao'] as Side[]).map((s) => (
           <button
             key={s}
@@ -111,7 +111,7 @@ export default function CommitPanel(props: Props) {
             {s}
           </button>
         ))}
-        <Tooltip tip="Milk=1, Cacao=2. Phe thiểu số thắng.">
+        <Tooltip tip="Milk=1, Cacao=2. Minority wins.">
           <span className="text-xs text-muted">(?)</span>
         </Tooltip>
       </div>
@@ -119,7 +119,7 @@ export default function CommitPanel(props: Props) {
       <div>
         <label className="block text-sm mb-1 flex items-center gap-2">
           <span>Stake (ETH/MATIC)</span>
-          <Tooltip tip="Nhập số lượng native coin gửi kèm.">
+          <Tooltip tip="Enter native coin amount to send.">
             <span className="text-xs text-muted">(?)</span>
           </Tooltip>
         </label>
@@ -130,7 +130,7 @@ export default function CommitPanel(props: Props) {
           placeholder="0.01"
           inputMode="decimal"
         />
-        <p className="text-xs text-gray-500 mt-1">Sẽ gửi {stake || '0'} dưới dạng value nếu hàm payable.</p>
+        <p className="text-xs text-gray-500 mt-1">Will send {stake || '0'} as value if payable.</p>
       </div>
 
       <div className="text-sm space-y-1">
@@ -149,7 +149,7 @@ export default function CommitPanel(props: Props) {
       </div>
 
       <div className="flex items-center gap-3">
-        <Tooltip tip="Tạo salt cục bộ → hash → gửi commit tx.">
+        <Tooltip tip="Generate local salt → hash → send commit tx.">
           <button onClick={onCommit} disabled={isPending} className="px-4 py-2 rounded-xl bg-indigo-600 text-white disabled:opacity-60">
             {isPending ? 'Submitting…' : 'Commit'}
           </button>

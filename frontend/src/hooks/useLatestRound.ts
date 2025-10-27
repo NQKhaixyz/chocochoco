@@ -13,7 +13,7 @@ export function useLatestRound() {
       setError(null)
       const r = await fetchLatestRound()
       if (!mounted) return
-      if (!r) setError('Không lấy được round hiện tại từ Indexer')
+      if (!r) setError('Unable to fetch current round from Indexer')
       setRound(r ?? null)
       setLoading(false)
     })()
@@ -24,4 +24,3 @@ export function useLatestRound() {
 
   return { loading, error, round }
 }
-
