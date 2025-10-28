@@ -3,6 +3,7 @@ export type Profile = {
   name: string
   bio: string
   avatarDataUrl?: string
+  catAvatarType?: string // Cat illustration type for avatar
   updatedAt: number
 }
 

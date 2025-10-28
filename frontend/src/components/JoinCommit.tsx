@@ -2,11 +2,12 @@
 import { useMemo, useState } from 'react'
 import { PublicKey, SystemProgram, Transaction, TransactionInstruction } from '@solana/web3.js'
 import { useConnection, useWallet } from '@solana/wallet-adapter-react'
-import { keyForSalt, genSalt32, toHexBytes, computeCommitment, u64le, type Tribe } from '../lib/commit'
+import { saltKey, generateSalt, toHex, fromHex, computeCommitment, type Tribe } from '../lib/solana-commit'
+import { u64le } from '../lib/bytes'
+import { useCurrentRound } from '../hooks/useCurrentRound'
+import { getRoundAddress, PROGRAM_ID } from '../solana/program'
 
-const PROGRAM_ID = new PublicKey(import.meta.env.VITE_PROGRAM_ID as string)
 const STAKE_LAMPORTS = BigInt((import.meta as any).env?.VITE_STAKE_LAMPORTS || '0')
-const ROUND_ID = 1n // TODO: fetch from program state or indexer
 
 function deriveRoundPda(roundId: bigint) {
   const seed = Buffer.from(u64le(roundId))
@@ -33,16 +34,19 @@ export default function JoinCommit() {
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState<{ kind: 'ok' | 'err'; text: string } | null>(null)
 
-  const roundId = ROUND_ID
+  // Use dynamic round instead of hardcoded
+  const { roundId: currentRoundId } = useCurrentRound()
+  const roundId = BigInt(currentRoundId || 1)
+  
   const cluster = (import.meta as any).env?.VITE_SOLANA_CLUSTER || 'devnet'
   const playerB58 = useMemo(() => publicKey?.toBase58() ?? '', [publicKey])
 
   function ensureSalt(): string | undefined {
     if (!publicKey) return
-    const key = keyForSalt(roundId.toString(), publicKey.toBase58())
+    const key = saltKey(roundId.toString(), publicKey.toBase58())
     let hex = localStorage.getItem(key)
     if (!hex) {
-      hex = toHexBytes(genSalt32())
+      hex = generateSalt()
       localStorage.setItem(key, hex)
     }
     setSaltHex(hex)
@@ -58,14 +62,13 @@ export default function JoinCommit() {
       // 1) Load/generate salt
       const hex = ensureSalt()
       if (!hex) throw new Error('Unable to generate salt')
-      const salt = Uint8Array.from(hex.match(/.{1,2}/g)!.map((h) => parseInt(h, 16)))
+      const salt = fromHex(hex)
 
-      // 2) Build commitment
-      const roundLe = u64le(roundId)
-      const commitment = await computeCommitment(tribe, salt, publicKey.toBytes(), roundLe)
+      // 2) Build commitment  
+      const roundPda = getRoundAddress(Number(roundId))
+      const commitment = await computeCommitment(tribe, salt, publicKey, roundPda)
 
       // 3) Derive PDAs & accounts
-      const roundPda = deriveRoundPda(roundId)
       const playerRoundPda = derivePlayerRoundPda(roundPda, publicKey)
       const vaultPda = deriveVaultPda(roundPda)
 
@@ -82,7 +85,7 @@ export default function JoinCommit() {
         { pubkey: vaultPda, isSigner: false, isWritable: true },
         { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
       ]
-      const ixCommit = new TransactionInstruction({ programId: PROGRAM_ID, keys, data })
+      const ixCommit = new TransactionInstruction({ programId: PROGRAM_ID, keys, data: Buffer.from(data) })
 
       // 5) Transfer stake to vault (remove if program debits lamports itself)
       const ixTransfer = SystemProgram.transfer({

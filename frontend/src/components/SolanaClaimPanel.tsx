@@ -5,9 +5,9 @@ import { useConnection, useWallet } from '@solana/wallet-adapter-react'
 import { deriveRoundPda, fetchRoundRaw, type RoundState } from '../lib/round'
 import { derivePlayerRoundPda, fetchPlayerRoundRaw, type PlayerRoundState } from '../lib/player-round'
 import WinLoseAnimation from './WinLoseAnimation'
+import { useCurrentRound } from '../hooks/useCurrentRound'
 
 const PROGRAM_ID = new PublicKey(import.meta.env.VITE_PROGRAM_ID as string)
-const ROUND_ID = 1n // TODO: make dynamic
 
 type ToastMsg = { kind: 'ok' | 'err' | 'info'; text: string }
 
@@ -21,27 +21,31 @@ export default function SolanaClaimPanel() {
   const [msg, setMsg] = useState<ToastMsg | null>(null)
   const [pollTrigger, setPollTrigger] = useState(0)
 
+  // Use dynamic round instead of hardcoded
+  const { roundId: currentRoundId } = useCurrentRound()
+  const roundIdBigInt = BigInt(currentRoundId || 1)
+  
   const cluster = (import.meta as any).env?.VITE_SOLANA_CLUSTER || 'devnet'
 
   // Load round state
   useEffect(() => {
     ;(async () => {
-      const rPda = deriveRoundPda(PROGRAM_ID, ROUND_ID)
+      const rPda = deriveRoundPda(PROGRAM_ID, roundIdBigInt)
       const st = await fetchRoundRaw(connection, rPda)
       setRound(st)
     })()
-  }, [connection, pollTrigger])
+  }, [connection, pollTrigger, roundIdBigInt])
 
   // Load player round state
   useEffect(() => {
     if (!publicKey) return
     ;(async () => {
-      const rPda = deriveRoundPda(PROGRAM_ID, ROUND_ID)
+      const rPda = deriveRoundPda(PROGRAM_ID, roundIdBigInt)
       const prPda = derivePlayerRoundPda(PROGRAM_ID, rPda, publicKey)
       const prState = await fetchPlayerRoundRaw(connection, prPda)
       setPlayerRound(prState)
     })()
-  }, [connection, publicKey, pollTrigger])
+  }, [connection, publicKey, pollTrigger, roundIdBigInt])
 
   // Poll for updates every 5s
   useEffect(() => {
@@ -82,7 +86,7 @@ export default function SolanaClaimPanel() {
 
       setBusy(true)
 
-      const rPda = deriveRoundPda(PROGRAM_ID, ROUND_ID)
+      const rPda = deriveRoundPda(PROGRAM_ID, roundIdBigInt)
       const prPda = derivePlayerRoundPda(PROGRAM_ID, rPda, publicKey)
 
       // Instruction data: opcode for claim_treat (e.g., 0x03)
@@ -141,7 +145,7 @@ export default function SolanaClaimPanel() {
       id="solana-claim-panel"
       className="w-full space-y-5 rounded-2xl border border-border bg-card p-6 shadow-soft"
     >
-      <h2 className="text-2xl font-semibold">Round Results #{ROUND_ID.toString()}</h2>
+      <h2 className="text-2xl font-semibold">Round Results #{currentRoundId}</h2>
 
       <div className="space-y-1 text-base">
         <div>

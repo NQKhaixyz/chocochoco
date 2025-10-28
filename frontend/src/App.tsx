@@ -1,17 +1,40 @@
-import React from 'react'
+import React, { lazy, Suspense } from 'react'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import { AppLayout } from './components/layout/AppLayout'
+
+// Eager load critical routes
 import HomePage from './routes/Home'
-import JoinPage from './routes/Join'
-import RevealPage from './routes/Reveal'
-import ClaimPage from './routes/Claim'
-import ProfilePage from './routes/Profile'
-import RoundsPage from './routes/Rounds'
-import LeaderboardPage from './routes/leaderboard'
-import AdminPage from './routes/Admin'
-import Landing from './routes/Landing'
-import Styleguide from './routes/Styleguide'
-import NotFound from './routes/NotFound'
+
+// Lazy load other routes for code splitting
+const JoinPage = lazy(() => import('./routes/Join'))
+const RevealPage = lazy(() => import('./routes/Reveal'))
+const ClaimPage = lazy(() => import('./routes/Claim'))
+const ProfilePage = lazy(() => import('./routes/Profile'))
+const RoundsPage = lazy(() => import('./routes/Rounds'))
+const LeaderboardPage = lazy(() => import('./routes/leaderboard'))
+const TokenDashboard = lazy(() => import('./routes/TokenDashboard'))
+const AdminPage = lazy(() => import('./routes/Admin'))
+const Landing = lazy(() => import('./routes/Landing'))
+const Styleguide = lazy(() => import('./routes/Styleguide'))
+const NotFound = lazy(() => import('./routes/NotFound'))
+
+// Loading fallback component
+function PageLoader() {
+  return (
+    <div className="flex items-center justify-center min-h-[60vh]">
+      <div className="h-16 w-16 animate-spin rounded-full border-4 border-brand/20 border-t-brand"></div>
+    </div>
+  )
+}
+
+// Wrapper to add Suspense to lazy-loaded routes
+function lazyRoute(Component: React.LazyExoticComponent<() => React.ReactElement>) {
+  return (
+    <Suspense fallback={<PageLoader />}>
+      <Component />
+    </Suspense>
+  )
+}
 
 const ENABLE_ADMIN = (import.meta.env.VITE_ENABLE_ADMIN as string | undefined) === 'true'
 const SHOW_STYLEGUIDE = import.meta.env.DEV
@@ -22,20 +45,21 @@ const router = createBrowserRouter([
     element: <AppLayout />,
     children: [
       { index: true, element: <HomePage />, handle: { breadcrumb: 'Home', hidden: true } },
-      { path: 'join', element: <JoinPage />, handle: { breadcrumb: 'Join' } },
-      { path: 'reveal', element: <RevealPage />, handle: { breadcrumb: 'Reveal' } },
-      { path: 'claim', element: <ClaimPage />, handle: { breadcrumb: 'Claim' } },
-      { path: 'profile', element: <ProfilePage />, handle: { breadcrumb: 'Profile' } },
-      { path: 'rounds', element: <RoundsPage />, handle: { breadcrumb: 'Rounds' } },
-      { path: 'leaderboard', element: <LeaderboardPage />, handle: { breadcrumb: 'Leaderboard' } },
-      { path: 'landing', element: <Landing />, handle: { breadcrumb: 'Landing', hidden: true } },
+      { path: 'join', element: lazyRoute(JoinPage), handle: { breadcrumb: 'Join' } },
+      { path: 'reveal', element: lazyRoute(RevealPage), handle: { breadcrumb: 'Reveal' } },
+      { path: 'claim', element: lazyRoute(ClaimPage), handle: { breadcrumb: 'Claim' } },
+      { path: 'profile', element: lazyRoute(ProfilePage), handle: { breadcrumb: 'Profile' } },
+      { path: 'rounds', element: lazyRoute(RoundsPage), handle: { breadcrumb: 'Rounds' } },
+      { path: 'leaderboard', element: lazyRoute(LeaderboardPage), handle: { breadcrumb: 'Leaderboard' } },
+      { path: 'tokens', element: lazyRoute(TokenDashboard), handle: { breadcrumb: 'Tokens' } },
+      { path: 'landing', element: lazyRoute(Landing), handle: { breadcrumb: 'Landing', hidden: true } },
       ...(ENABLE_ADMIN
-        ? ([{ path: 'admin', element: <AdminPage />, handle: { breadcrumb: 'Admin' } }] as const)
+        ? ([{ path: 'admin', element: lazyRoute(AdminPage), handle: { breadcrumb: 'Admin' } }] as const)
         : []),
       ...(SHOW_STYLEGUIDE
-        ? ([{ path: 'styleguide', element: <Styleguide />, handle: { breadcrumb: 'Styleguide' } }] as const)
+        ? ([{ path: 'styleguide', element: lazyRoute(Styleguide), handle: { breadcrumb: 'Styleguide' } }] as const)
         : []),
-      { path: '*', element: <NotFound />, handle: { breadcrumb: 'Not Found', hidden: true } },
+      { path: '*', element: lazyRoute(NotFound), handle: { breadcrumb: 'Not Found', hidden: true } },
     ],
   },
 ])

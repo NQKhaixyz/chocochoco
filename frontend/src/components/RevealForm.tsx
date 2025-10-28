@@ -4,10 +4,9 @@ import { PublicKey, SystemProgram, Transaction, TransactionInstruction } from '@
 import { useConnection, useWallet } from '@solana/wallet-adapter-react'
 import { SolanaCountdown } from './SolanaCountdown'
 import { fetchRoundRaw, deriveRoundPda, type RoundState } from '../lib/round'
-import { u64le, keyForSalt } from '../lib/commit'
-
-const PROGRAM_ID = new PublicKey(import.meta.env.VITE_PROGRAM_ID as string)
-const ROUND_ID = 1n // TODO: dynamic
+import { saltKey } from '../lib/solana-commit'
+import { useCurrentRound } from '../hooks/useCurrentRound'
+import { PROGRAM_ID } from '../solana/program'
 
 function playerRoundPda(roundPk: PublicKey, player: PublicKey) {
   return PublicKey.findProgramAddressSync(
@@ -26,8 +25,11 @@ export default function RevealForm() {
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState<{ kind: 'ok' | 'err'; text: string } | null>(null)
 
+  // Use dynamic round instead of hardcoded
+  const { roundId: currentRoundId } = useCurrentRound()
+  const ROUND_ID = BigInt(currentRoundId || 1)
+  
   const cluster = (import.meta as any).env?.VITE_SOLANA_CLUSTER || 'devnet'
-  const roundLe = useMemo(() => u64le(ROUND_ID), [])
   const playerHex = useMemo(() => publicKey?.toBase58() ?? '', [publicKey])
 
   useEffect(() => {
@@ -36,14 +38,14 @@ export default function RevealForm() {
       const st = await fetchRoundRaw(connection, rPda)
       setRound(st)
     })()
-  }, [connection])
+  }, [connection, ROUND_ID])
 
   useEffect(() => {
     if (!publicKey) return
-    const k = keyForSalt(ROUND_ID.toString(), publicKey.toBase58())
+    const k = saltKey(ROUND_ID.toString(), publicKey.toBase58())
     const hex = localStorage.getItem(k) || ''
     setSaltHex(hex)
-  }, [publicKey])
+  }, [publicKey, ROUND_ID])
 
   const now = Math.floor(Date.now() / 1000)
   const canReveal = !!round && now < (round.revealEnd ?? 0)
@@ -76,7 +78,7 @@ export default function RevealForm() {
         { pubkey: prPda, isSigner: false, isWritable: true },
         { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
       ]
-      const ix = new TransactionInstruction({ programId: PROGRAM_ID, keys, data })
+      const ix = new TransactionInstruction({ programId: PROGRAM_ID, keys, data: Buffer.from(data) })
       const tx = new Transaction().add(ix)
       const sig = await sendTransaction(tx, connection, { skipPreflight: false })
 

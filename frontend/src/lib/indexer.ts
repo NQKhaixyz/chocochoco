@@ -8,6 +8,8 @@ const INDEXER_BASE_URL = import.meta.env.VITE_INDEXER_URL || 'http://localhost:3
 export interface TopPayoutEntry {
   player: string;
   totalLamports: string;
+  totalClaims?: number;
+  lastClaim?: string;
 }
 
 export interface WeeklyWinRateEntry {

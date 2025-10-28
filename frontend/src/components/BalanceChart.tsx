@@ -13,6 +13,7 @@ interface BalanceDataPoint {
 interface BalanceChartProps {
   data: BalanceDataPoint[]
   className?: string
+  onDataPointClick?: (roundId: number) => void
 }
 
 function formatFoodShort(lamports: bigint): string {
@@ -20,7 +21,7 @@ function formatFoodShort(lamports: bigint): string {
   return whole.toFixed(1)
 }
 
-export function BalanceChart({ data, className = '' }: BalanceChartProps) {
+export function BalanceChart({ data, className = '', onDataPointClick }: BalanceChartProps) {
   const chartData = useMemo(() => {
     if (data.length === 0) return null
 
@@ -95,6 +96,7 @@ export function BalanceChart({ data, className = '' }: BalanceChartProps) {
 
         {/* SVG Chart */}
         <svg
+          id="earnings-chart-svg"
           viewBox={`0 0 ${width} ${height}`}
           className="w-full h-64 relative z-10"
           style={{ marginLeft: '40px', marginRight: '16px' }}
@@ -201,7 +203,7 @@ export function BalanceChart({ data, className = '' }: BalanceChartProps) {
                   </>
                 )}
                 
-                {/* Outer circle with gradient */}
+                {/* Outer circle with gradient - Make clickable */}
                 <circle
                   cx={p.x}
                   cy={p.y}
@@ -209,14 +211,17 @@ export function BalanceChart({ data, className = '' }: BalanceChartProps) {
                   fill="white"
                   stroke="currentColor"
                   strokeWidth="0.35"
-                  className={
-                    isSpecial 
+                  className={`
+                    ${isSpecial 
                       ? isHighest ? 'text-green-600' : 'text-orange-600'
                       : isPositiveChange ? 'text-green-500'
                       : isNegativeChange ? 'text-red-500'
-                      : 'text-brand'
-                  }
+                      : 'text-brand'}
+                    ${onDataPointClick ? 'cursor-pointer' : ''}
+                  `}
                   opacity="1"
+                  onClick={() => onDataPointClick?.(p.point.roundId)}
+                  style={{ pointerEvents: 'all' }}
                 >
                   {/* Pulse animation for special points */}
                   {isSpecial && (
@@ -229,21 +234,39 @@ export function BalanceChart({ data, className = '' }: BalanceChartProps) {
                   )}
                 </circle>
                 
-                {/* Inner filled circle */}
+                {/* Inner filled circle - Also clickable */}
                 <circle
                   cx={p.x}
                   cy={p.y}
                   r={isSpecial ? "1.4" : isFirst || isLast ? "1" : "0.6"}
                   fill="currentColor"
-                  className={
-                    isSpecial 
+                  className={`
+                    ${isSpecial 
                       ? isHighest ? 'text-green-600' : 'text-orange-600'
                       : isPositiveChange ? 'text-green-500'
                       : isNegativeChange ? 'text-red-500'
-                      : 'text-brand'
-                  }
+                      : 'text-brand'}
+                    ${onDataPointClick ? 'cursor-pointer' : ''}
+                  `}
                   opacity="1"
+                  onClick={() => onDataPointClick?.(p.point.roundId)}
+                  style={{ pointerEvents: 'all' }}
                 />
+                
+                {/* Invisible larger hit area for easier clicking */}
+                {onDataPointClick && (
+                  <circle
+                    cx={p.x}
+                    cy={p.y}
+                    r="3"
+                    fill="transparent"
+                    className="cursor-pointer hover:opacity-20 hover:fill-current transition"
+                    onClick={() => onDataPointClick(p.point.roundId)}
+                    style={{ pointerEvents: 'all' }}
+                  >
+                    <title>Round #{p.point.roundId} - Click for details</title>
+                  </circle>
+                )}
                 
                 {/* Label for special points with background */}
                 {isSpecial && (

@@ -561,3 +561,132 @@ export function getBalanceHistory(player: PublicKey | string): Array<{ roundId: 
   
   return history
 }
+
+/**
+ * Get transaction history for a player
+ */
+export function getTransactionHistory(player: PublicKey | string): Array<{
+  id: string
+  type: 'commit' | 'claim' | 'refund'
+  amount: bigint
+  roundId: number
+  timestamp: number
+  status: 'success' | 'pending' | 'failed'
+}> {
+  const state = loadState()
+  const address = typeof player === 'string' ? player : player.toBase58()
+  
+  const playerRounds = Object.values(state.playerRounds)
+    .filter(pr => pr.player === address)
+    .sort((a, b) => b.roundId - a.roundId)
+  
+  const transactions: Array<{
+    id: string
+    type: 'commit' | 'claim' | 'refund'
+    amount: bigint
+    roundId: number
+    timestamp: number
+    status: 'success' | 'pending' | 'failed'
+  }> = []
+  
+  for (const pr of playerRounds) {
+    const round = state.rounds[pr.roundId]
+    if (!round) continue
+    
+    // Add commit transaction
+    transactions.push({
+      id: `${pr.roundId}-commit-${pr.player}`,
+      type: 'commit',
+      amount: BigInt(round.stakeLamports),
+      roundId: pr.roundId,
+      timestamp: pr.committedAt,
+      status: 'success'
+    })
+    
+    // Add claim transaction if claimed
+    if (pr.claimed && round.isFinalized && round.winnerSide === pr.tribe) {
+      const totalStake = BigInt(round.countMilk + round.countCacao) * round.stakeLamports
+      const fee = (totalStake * BigInt(round.feeBps)) / 10000n
+      const pool = totalStake - fee
+      const winnerCount = round.winnerSide === 'Milk' ? round.countMilk : round.countCacao
+      
+      if (winnerCount > 0) {
+        const payout = pool / BigInt(winnerCount)
+        transactions.push({
+          id: `${pr.roundId}-claim-${pr.player}`,
+          type: 'claim',
+          amount: payout,
+          roundId: pr.roundId,
+          timestamp: pr.claimedAt || Date.now(),
+          status: 'success'
+        })
+      }
+    }
+  }
+  
+  return transactions
+}
+
+/**
+ * Get earnings breakdown by round for a player
+ */
+export function getEarningsBreakdown(player: PublicKey | string): Array<{
+  roundId: number
+  tribe: 'Milk' | 'Cacao'
+  stake: bigint
+  payout: bigint
+  profit: bigint
+  timestamp: number
+}> {
+  const state = loadState()
+  const address = typeof player === 'string' ? player : player.toBase58()
+  
+  const playerRounds = Object.values(state.playerRounds)
+    .filter(pr => pr.player === address && pr.revealed)
+    .sort((a, b) => b.roundId - a.roundId)
+  
+  const earnings: Array<{
+    roundId: number
+    tribe: 'Milk' | 'Cacao'
+    stake: bigint
+    payout: bigint
+    profit: bigint
+    timestamp: number
+  }> = []
+  
+  for (const pr of playerRounds) {
+    const round = state.rounds[pr.roundId]
+    if (!round || !round.isFinalized || round.winnerSide === null) continue
+    
+    const stake = BigInt(round.stakeLamports)
+    let payout = 0n
+    let profit = 0n
+    
+    if (round.winnerSide === pr.tribe && pr.claimed) {
+      const totalStake = BigInt(round.countMilk + round.countCacao) * round.stakeLamports
+      const fee = (totalStake * BigInt(round.feeBps)) / 10000n
+      const pool = totalStake - fee
+      const winnerCount = round.winnerSide === 'Milk' ? round.countMilk : round.countCacao
+      
+      if (winnerCount > 0) {
+        payout = pool / BigInt(winnerCount)
+        profit = payout - stake
+      }
+    } else if (round.winnerSide !== pr.tribe) {
+      // Lost
+      payout = 0n
+      profit = -stake
+    }
+    
+    earnings.push({
+      roundId: pr.roundId,
+      tribe: pr.tribe as 'Milk' | 'Cacao',
+      stake,
+      payout,
+      profit,
+      timestamp: pr.claimedAt || pr.revealedAt || pr.committedAt
+    })
+  }
+  
+  return earnings
+}

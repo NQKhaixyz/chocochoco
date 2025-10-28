@@ -5,10 +5,21 @@ import { Textarea } from '../components/ui/Textarea'
 import { Button } from '../components/ui/Button'
 import { Icon } from '../components/ui/Icon'
 import { CatIllustration } from '../components/CatIllustration'
+import { CatAvatarPicker } from '../components/CatAvatarPicker'
 import { BalanceChart } from '../components/BalanceChart'
+import { RoundDetailsModal } from '../components/RoundDetailsModal'
 import { useSolanaAccount } from '../hooks/useSolanaAccount'
 import { clearProfile, loadProfile, saveProfile, type Profile } from '../lib/profile-store'
 import * as demo from '../lib/demo-rounds'
+
+type CatType = 
+  | 'stack' | 'sleep' | 'play' | 'milk' | 'cacao' | 'winner' | 'thinking' 
+  | 'sitting' | 'stretch' | 'paw' | 'box' | 'yarn'
+  | 'happy' | 'sad' | 'angry' | 'surprised' | 'tired' | 'excited' | 'victorious'
+  | 'eating' | 'grooming' | 'hunting' | 'walking' | 'jumping' | 'running'
+  | 'hat' | 'glasses' | 'scarf' | 'crown' | 'bowtie' | 'bandana'
+  | 'christmas' | 'halloween' | 'birthday' | 'valentine'
+  | 'legendary' | 'epic' | 'rare' | 'common'
 
 function formatFood(lamports: bigint): string {
   // Demo formatter: treat lamports as 9 decimals
@@ -45,9 +56,12 @@ export default function ProfilePage() {
   const [name, setName] = useState('')
   const [bio, setBio] = useState('')
   const [avatarDataUrl, setAvatarDataUrl] = useState<string | undefined>(undefined)
+  const [catAvatarType, setCatAvatarType] = useState<CatType | undefined>('paw')
+  const [showCatPicker, setShowCatPicker] = useState(false)
   const [savedAt, setSavedAt] = useState<number | undefined>(undefined)
   const [status, setStatus] = useState<string>('')
   const [updateTrigger, setUpdateTrigger] = useState(0) // Force update trigger
+  const [selectedRoundId, setSelectedRoundId] = useState<number | null>(null) // For modal
   const fileRef = useRef<HTMLInputElement>(null)
 
   // Force update when page becomes visible or every 5 seconds
@@ -74,11 +88,13 @@ export default function ProfilePage() {
       setName(p.name)
       setBio(p.bio)
       setAvatarDataUrl(p.avatarDataUrl)
+      setCatAvatarType((p.catAvatarType as CatType) || 'paw')
       setSavedAt(p.updatedAt)
     } else {
       setName('')
       setBio('')
       setAvatarDataUrl(undefined)
+      setCatAvatarType('paw')
       setSavedAt(undefined)
     }
   }, [address])
@@ -144,6 +160,7 @@ export default function ProfilePage() {
 
   function onRemoveAvatar() {
     setAvatarDataUrl(undefined)
+    setCatAvatarType(undefined)
     if (fileRef.current) fileRef.current.value = ''
   }
 
@@ -154,6 +171,7 @@ export default function ProfilePage() {
       name,
       bio,
       avatarDataUrl,
+      catAvatarType,
       updatedAt: Date.now(),
     }
     saveProfile(profile)
@@ -168,6 +186,7 @@ export default function ProfilePage() {
     setName('')
     setBio('')
     setAvatarDataUrl(undefined)
+    setCatAvatarType('paw')
     setSavedAt(undefined)
     setStatus('Đã xóa hồ sơ cục bộ')
     setTimeout(() => setStatus(''), 1500)
@@ -199,6 +218,10 @@ export default function ProfilePage() {
               <div className="h-20 w-20 overflow-hidden rounded-full border-2 border-brand bg-surface-subtle relative">
                 {avatarDataUrl ? (
                   <img src={avatarDataUrl} alt="Avatar" className="h-full w-full object-cover" />
+                ) : catAvatarType ? (
+                  <div className="flex h-full w-full items-center justify-center">
+                    <CatIllustration type={catAvatarType} size="md" />
+                  </div>
                 ) : (
                   <div className="flex h-full w-full items-center justify-center">
                     <CatIllustration type="paw" size="md" />
@@ -264,14 +287,44 @@ export default function ProfilePage() {
           {/* Balance History Chart */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Icon name="treasury" className="h-5 w-5" />
-                Earnings History
-              </CardTitle>
-              <CardDescription>Your cumulative FOOD token earnings over time</CardDescription>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <Icon name="treasury" className="h-5 w-5" />
+                    Earnings History
+                  </CardTitle>
+                  <CardDescription>Your cumulative FOOD token earnings over time</CardDescription>
+                </div>
+                {balanceHistory.length > 0 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={async () => {
+                      const svg = document.querySelector('#earnings-chart-svg') as SVGSVGElement
+                      if (svg) {
+                        const { exportChartAsPNG } = await import('../lib/chart-export')
+                        try {
+                          await exportChartAsPNG(svg, `chocochoco-earnings-${address}.png`)
+                          setStatus('Chart exported!')
+                          setTimeout(() => setStatus(''), 2000)
+                        } catch (error) {
+                          console.error('Export failed:', error)
+                          setStatus('Export failed')
+                          setTimeout(() => setStatus(''), 2000)
+                        }
+                      }
+                    }}
+                  >
+                    📥 Export
+                  </Button>
+                )}
+              </div>
             </CardHeader>
             <CardContent>
-              <BalanceChart data={balanceHistory} />
+              <BalanceChart 
+                data={balanceHistory} 
+                onDataPointClick={(roundId) => setSelectedRoundId(roundId)}
+              />
             </CardContent>
           </Card>
 
@@ -354,31 +407,45 @@ export default function ProfilePage() {
               <CardDescription>Customize your profile (stored locally)</CardDescription>
             </CardHeader>
             <CardContent className="space-y-5">
-              <div className="flex items-center gap-4">
-                <div className="h-16 w-16 overflow-hidden rounded-full border border-border bg-surface-subtle">
-                  {avatarDataUrl ? (
-                    <img src={avatarDataUrl} alt="Avatar" className="h-full w-full object-cover" />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center text-muted">
-                      <Icon name="user" className="h-6 w-6" />
-                    </div>
-                  )}
+              {/* Avatar Options */}
+              <div>
+                <span className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-strong mb-3 block">Avatar</span>
+                <div className="flex items-center gap-4">
+                  <div className="h-16 w-16 overflow-hidden rounded-full border border-border bg-surface-subtle">
+                    {avatarDataUrl ? (
+                      <img src={avatarDataUrl} alt="Avatar" className="h-full w-full object-cover" />
+                    ) : catAvatarType ? (
+                      <div className="flex h-full w-full items-center justify-center">
+                        <CatIllustration type={catAvatarType} size="md" />
+                      </div>
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-muted">
+                        <Icon name="user" className="h-6 w-6" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <Button size="sm" variant="secondary" leftIcon="sparkles" onClick={() => setShowCatPicker(true)}>
+                      Choose Cat
+                    </Button>
+                    <Button size="sm" variant="secondary" leftIcon="sparkles" onClick={onPickAvatar}>
+                      Upload Image
+                    </Button>
+                    <Button size="sm" variant="ghost" onClick={onRemoveAvatar} disabled={!avatarDataUrl && !catAvatarType}>
+                      Clear
+                    </Button>
+                    <input
+                      ref={fileRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={onFileChange}
+                    />
+                  </div>
                 </div>
-                <div className="flex gap-2">
-                  <Button size="sm" variant="secondary" leftIcon="sparkles" onClick={onPickAvatar}>
-                    Upload
-                  </Button>
-                  <Button size="sm" variant="ghost" onClick={onRemoveAvatar} disabled={!avatarDataUrl}>
-                    Remove
-                  </Button>
-                  <input
-                    ref={fileRef}
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={onFileChange}
-                  />
-                </div>
+                {catAvatarType && !avatarDataUrl && (
+                  <p className="mt-2 text-xs text-muted">Using cat avatar: <span className="font-semibold text-brand">{catAvatarType}</span></p>
+                )}
               </div>
               <div className="space-y-2">
                 <span className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-strong">Display Name</span>
@@ -508,6 +575,28 @@ export default function ProfilePage() {
           </Card>
         </div>
       </div>
+
+      {/* Round Details Modal */}
+      {selectedRoundId !== null && (
+        <RoundDetailsModal
+          roundId={selectedRoundId}
+          playerAddress={address}
+          onClose={() => setSelectedRoundId(null)}
+        />
+      )}
+
+      {/* Cat Avatar Picker Modal */}
+      {showCatPicker && (
+        <CatAvatarPicker
+          selectedCat={catAvatarType}
+          onSelect={(catType) => {
+            setCatAvatarType(catType)
+            setAvatarDataUrl(undefined) // Clear uploaded image when selecting cat
+            setShowCatPicker(false)
+          }}
+          onClose={() => setShowCatPicker(false)}
+        />
+      )}
     </div>
   )
 }

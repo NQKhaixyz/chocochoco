@@ -5,6 +5,7 @@ import { Input } from '../components/ui/Input'
 import { Icon } from '../components/ui/Icon'
 import { ConnectButton } from '../components/ConnectButton'
 import { CatIllustration } from '../components/CatIllustration'
+import { OnboardingTour, useOnboarding } from '../components/OnboardingTour'
 import { useDeadlines } from '../hooks/useSolanaRounds'
 import { formatCountdown } from '../lib/time-format'
 import { hasDeploymentConfigured } from '../lib/chocochoco-contract'
@@ -25,6 +26,7 @@ const ZERO_PLACEHOLDER = '—'
 export default function JoinPage() {
   const { round, roundId, commitSecondsRemaining, phase, isLoading, error } = useDeadlines()
   const { publicKey, isConnected } = useSolanaAccount()
+  const { hasSeenOnboarding, markAsCompleted } = useOnboarding()
   
   // Get player's FOOD balance
   const [foodBalance, setFoodBalance] = useState<bigint>(0n)
@@ -385,6 +387,14 @@ export default function JoinPage() {
           </div>
         </div>
       </div>
+      
+      {/* Onboarding Tour for first-time users */}
+      {!hasSeenOnboarding && (
+        <OnboardingTour
+          onComplete={markAsCompleted}
+          onSkip={markAsCompleted}
+        />
+      )}
     </div>
   )
 }
