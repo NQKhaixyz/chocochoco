@@ -4,6 +4,8 @@ import { Input } from '../components/ui/Input'
 import { Textarea } from '../components/ui/Textarea'
 import { Button } from '../components/ui/Button'
 import { Icon } from '../components/ui/Icon'
+import { CatIllustration } from '../components/CatIllustration'
+import { BalanceChart } from '../components/BalanceChart'
 import { useSolanaAccount } from '../hooks/useSolanaAccount'
 import { clearProfile, loadProfile, saveProfile, type Profile } from '../lib/profile-store'
 import * as demo from '../lib/demo-rounds'
@@ -17,6 +19,27 @@ function formatFood(lamports: bigint): string {
   return `${neg ? '-' : ''}${whole.toString()}.${frac} FOOD`
 }
 
+function formatShortAddress(addr: string): string {
+  return `${addr.slice(0, 4)}...${addr.slice(-4)}`
+}
+
+function calculateWinRate(stats: ReturnType<typeof demo.getPlayerStats>): number {
+  if (stats.roundsPlayed === 0) return 0
+  return Math.round((stats.wins / stats.roundsPlayed) * 100)
+}
+
+function getBadges(stats: ReturnType<typeof demo.getPlayerStats>) {
+  const badges: Array<{ icon: string; label: string; color: string; iconName?: 'trophy' | 'sparkles' | 'history' | 'success' | 'shield' }> = []
+  
+  if (stats.wins >= 10) badges.push({ icon: 'trophy', label: 'Champion', color: 'bg-yellow-500/20 text-yellow-700', iconName: 'trophy' })
+  if (stats.wins >= 5) badges.push({ icon: 'sparkles', label: 'Star Player', color: 'bg-blue-500/20 text-blue-700', iconName: 'sparkles' })
+  if (stats.roundsPlayed >= 20) badges.push({ icon: 'history', label: 'Veteran', color: 'bg-purple-500/20 text-purple-700', iconName: 'history' })
+  if (stats.revealed === stats.roundsPlayed && stats.roundsPlayed > 0) badges.push({ icon: 'success', label: 'Reliable', color: 'bg-green-500/20 text-green-700', iconName: 'success' })
+  if (calculateWinRate(stats) >= 60) badges.push({ icon: 'shield', label: 'Hot Streak', color: 'bg-orange-500/20 text-orange-700', iconName: 'shield' })
+  
+  return badges
+}
+
 export default function ProfilePage() {
   const { address, publicKey, isConnected } = useSolanaAccount()
   const [name, setName] = useState('')
@@ -24,7 +47,25 @@ export default function ProfilePage() {
   const [avatarDataUrl, setAvatarDataUrl] = useState<string | undefined>(undefined)
   const [savedAt, setSavedAt] = useState<number | undefined>(undefined)
   const [status, setStatus] = useState<string>('')
+  const [updateTrigger, setUpdateTrigger] = useState(0) // Force update trigger
   const fileRef = useRef<HTMLInputElement>(null)
+
+  // Force update when page becomes visible or every 5 seconds
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        setUpdateTrigger(prev => prev + 1)
+      }
+    }
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    const interval = setInterval(() => setUpdateTrigger(prev => prev + 1), 5000)
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      clearInterval(interval)
+    }
+  }, [])
 
   useEffect(() => {
     if (!address) return
@@ -45,7 +86,46 @@ export default function ProfilePage() {
   const stats = useMemo(() => {
     if (!publicKey) return null
     return demo.getPlayerStats(publicKey)
-  }, [publicKey])
+  }, [publicKey, updateTrigger]) // Add updateTrigger
+
+  const recentGames = useMemo(() => {
+    if (!publicKey) return []
+    const playerRounds = demo.listPlayerRounds(publicKey)
+    return playerRounds
+      .sort((a, b) => b.committedAt - a.committedAt)
+      .slice(0, 5)
+      .map(pr => {
+        const round = demo.getRound(pr.roundId)
+        return { ...pr, round }
+      })
+  }, [publicKey, updateTrigger]) // Add updateTrigger
+
+  const badges = useMemo(() => {
+    if (!stats) return []
+    return getBadges(stats)
+  }, [stats])
+
+  const winRate = useMemo(() => {
+    if (!stats) return 0
+    return calculateWinRate(stats)
+  }, [stats])
+
+  const balanceHistory = useMemo(() => {
+    if (!publicKey) return []
+    return demo.getBalanceHistory(publicKey)
+  }, [publicKey, updateTrigger]) // Add updateTrigger to refresh data
+
+  // Calculate total net earnings from balance history
+  const totalEarnings = useMemo(() => {
+    if (balanceHistory.length === 0) return 0n
+    return balanceHistory[balanceHistory.length - 1]?.earnings || 0n
+  }, [balanceHistory])
+
+  // Calculate current balance: initial (100) + earnings
+  const currentBalance = useMemo(() => {
+    // Always calculate from earnings to ensure consistency
+    return 100_000_000_000n + totalEarnings
+  }, [totalEarnings])
 
   function onPickAvatar() {
     fileRef.current?.click()
@@ -98,7 +178,10 @@ export default function ProfilePage() {
       <div className="space-y-8">
         <Card>
           <CardHeader>
-            <CardTitle>Hồ sơ</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <CatIllustration type="sitting" size="sm" />
+              Hồ sơ
+            </CardTitle>
             <CardDescription>Kết nối ví để tạo và xem hồ sơ của bạn.</CardDescription>
           </CardHeader>
         </Card>
@@ -108,101 +191,323 @@ export default function ProfilePage() {
 
   return (
     <div className="space-y-8">
-      <Card>
-        <CardHeader>
-          <CardTitle>Hồ sơ của tôi</CardTitle>
-          <CardDescription>Nhập tên, mô tả và ảnh đại diện. Lưu cục bộ.</CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-6 lg:grid-cols-[2fr,1fr]">
-          <div className="space-y-5 rounded-2xl border border-border bg-surface px-6 py-5">
+      {/* Profile Header with Social Stats */}
+      <div className="rounded-3xl bg-gradient-brand p-0.5 shadow-float">
+        <div className="rounded-3xl bg-surface px-8 py-6">
+          <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
             <div className="flex items-center gap-4">
-              <div className="h-16 w-16 overflow-hidden rounded-full border border-border bg-surface-subtle">
+              <div className="h-20 w-20 overflow-hidden rounded-full border-2 border-brand bg-surface-subtle relative">
                 {avatarDataUrl ? (
                   <img src={avatarDataUrl} alt="Avatar" className="h-full w-full object-cover" />
                 ) : (
-                  <div className="flex h-full w-full items-center justify-center text-muted">
-                    <Icon name="user" className="h-6 w-6" />
+                  <div className="flex h-full w-full items-center justify-center">
+                    <CatIllustration type="paw" size="md" />
                   </div>
                 )}
               </div>
-              <div className="flex gap-2">
-                <Button size="sm" variant="secondary" leftIcon="image" onClick={onPickAvatar}>
-                  Tải ảnh
-                </Button>
-                <Button size="sm" variant="ghost" onClick={onRemoveAvatar} disabled={!avatarDataUrl}>
-                  Xóa ảnh
-                </Button>
-                <input
-                  ref={fileRef}
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={onFileChange}
-                />
+              <div>
+                <h1 className="text-2xl font-bold text-fg">{name || 'Anonymous Player'}</h1>
+                <p className="text-sm text-muted">{formatShortAddress(address!)}</p>
+                {bio && <p className="mt-1 text-sm text-muted-strong">{bio}</p>}
               </div>
             </div>
-            <div className="space-y-2">
-              <span className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-strong">Tên hiển thị</span>
-              <Input placeholder="Nhập tên…" value={name} onChange={(e) => setName(e.target.value)} />
+            
+            {/* Social Stats */}
+            <div className="flex gap-6">
+              <div className="text-center group cursor-default">
+                <div className="text-2xl font-bold text-brand-strong transition-all duration-300 group-hover:scale-110 group-hover:text-brand">
+                  {demo.formatFoodBalance(currentBalance)}
+                </div>
+                <div className="text-xs text-muted">Balance</div>
+              </div>
+              <div className="text-center group cursor-default">
+                <div className="text-2xl font-bold text-brand-strong transition-all duration-300 group-hover:scale-110 group-hover:text-brand">
+                  {stats?.roundsPlayed || 0}
+                </div>
+                <div className="text-xs text-muted">Games</div>
+              </div>
+              <div className="text-center group cursor-default">
+                <div className="text-2xl font-bold text-brand-strong transition-all duration-300 group-hover:scale-110 group-hover:text-brand">
+                  {stats?.wins || 0}
+                </div>
+                <div className="text-xs text-muted">Wins</div>
+              </div>
+              <div className="text-center group cursor-default">
+                <div className="text-2xl font-bold text-brand-strong transition-all duration-300 group-hover:scale-110 group-hover:text-brand">
+                  {winRate}%
+                </div>
+                <div className="text-xs text-muted">Win Rate</div>
+              </div>
             </div>
-            <div className="space-y-2">
-              <span className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-strong">Mô tả bản thân</span>
-              <Textarea placeholder="Giới thiệu ngắn…" value={bio} onChange={(e) => setBio(e.target.value)} rows={4} />
-            </div>
-            <div className="flex gap-3">
-              <Button size="lg" rightIcon="sparkles" onClick={onSave}>
-                Lưu hồ sơ
-              </Button>
-              <Button size="lg" variant="outline" onClick={onClear}>
-                Xóa hồ sơ
-              </Button>
-              {status ? <span className="self-center text-xs text-muted-strong">{status}</span> : null}
-            </div>
-            {savedAt ? (
-              <p className="text-xs text-muted">Cập nhật: {new Date(savedAt).toLocaleString()}</p>
-            ) : null}
           </div>
 
-          <div className="space-y-4">
-            <Card variant="solid">
-              <CardHeader>
-                <CardTitle>Tài sản của tôi</CardTitle>
-                <CardDescription>Chỉ chủ tài khoản nhìn thấy.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3 text-sm">
-                <div className="flex items-center justify-between rounded-xl bg-surface-subtle px-4 py-3">
-                  <span>FOOD</span>
-                  <span className="font-semibold text-fg">{stats ? formatFood(stats.totalPayoutLamports) : '—'}</span>
+          {/* Badges */}
+          {badges.length > 0 && (
+            <div className="mt-4 flex flex-wrap gap-2">
+              {badges.map((badge, i) => (
+                <span
+                  key={i}
+                  className={`flex items-center gap-1.5 rounded-full ${badge.color} px-3 py-1 text-xs font-semibold`}
+                >
+                  {badge.iconName && <Icon name={badge.iconName} className="h-3.5 w-3.5" />}
+                  {badge.label}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="grid gap-8 lg:grid-cols-[2fr,1fr]">
+        {/* Left Column - Activity Feed */}
+        <div className="space-y-6">
+          {/* Balance History Chart */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Icon name="treasury" className="h-5 w-5" />
+                Earnings History
+              </CardTitle>
+              <CardDescription>Your cumulative FOOD token earnings over time</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <BalanceChart data={balanceHistory} />
+            </CardContent>
+          </Card>
+
+          {/* Recent Activity */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <CatIllustration type="yarn" size="sm" className="animate-float" />
+                Recent Activity
+              </CardTitle>
+              <CardDescription>Your latest game history</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {recentGames.length === 0 ? (
+                <div className="text-center py-8">
+                  <CatIllustration type="sleep" size="lg" className="mx-auto mb-3" />
+                  <p className="text-sm text-muted">No games played yet. Join a round to get started!</p>
                 </div>
-                <div className="flex items-center justify-between rounded-xl bg-surface-subtle px-4 py-3">
-                  <span>Mèo (thắng)</span>
-                  <span className="font-semibold text-fg">{stats ? stats.wins : '—'}</span>
+              ) : (
+                recentGames.map((game) => (
+                  <div
+                    key={`${game.roundId}-${game.player}`}
+                    className="flex items-center justify-between rounded-xl border border-border bg-surface px-4 py-3 transition hover:border-brand/50"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Icon 
+                        name={game.tribe === 'Milk' ? 'milk' : 'cacao'} 
+                        className="h-5 w-5 text-brand-strong" 
+                      />
+                      <div>
+                        <div className="text-sm font-semibold text-fg">
+                          Round #{game.roundId} · {game.tribe}
+                        </div>
+                        <div className="text-xs text-muted">
+                          {game.revealed ? (
+                            game.round?.winnerSide === game.tribe ? (
+                              <span className="text-green-600 flex items-center gap-1">
+                                <Icon name="success" className="h-3 w-3" /> Won!
+                              </span>
+                            ) : game.round?.winnerSide === null ? (
+                              <span className="text-yellow-600 flex items-center gap-1">
+                                <Icon name="neutral" className="h-3 w-3" /> Tied
+                              </span>
+                            ) : (
+                              <span className="text-red-600 flex items-center gap-1">
+                                <Icon name="alert" className="h-3 w-3" /> Lost
+                              </span>
+                            )
+                          ) : (
+                            <span className="text-orange-600 flex items-center gap-1">
+                              <Icon name="timer" className="h-3 w-3" /> Waiting reveal
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-xs text-muted">
+                        {new Date(game.committedAt).toLocaleDateString()}
+                      </div>
+                      {game.claimed && (
+                        <div className="text-xs text-green-600 font-semibold flex items-center gap-1">
+                          <Icon name="treasury" className="h-3 w-3" /> Claimed
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Edit Profile Section */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Icon name="settings" className="h-5 w-5" />
+                Edit Profile
+              </CardTitle>
+              <CardDescription>Customize your profile (stored locally)</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              <div className="flex items-center gap-4">
+                <div className="h-16 w-16 overflow-hidden rounded-full border border-border bg-surface-subtle">
+                  {avatarDataUrl ? (
+                    <img src={avatarDataUrl} alt="Avatar" className="h-full w-full object-cover" />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center text-muted">
+                      <Icon name="user" className="h-6 w-6" />
+                    </div>
+                  )}
                 </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle>Thống kê</CardTitle>
-                <CardDescription>Hoạt động của bạn (demo).</CardDescription>
-              </CardHeader>
-              <CardContent className="grid gap-3 text-sm text-muted">
-                <div className="flex items-center justify-between rounded-2xl border border-border bg-surface px-4 py-3">
-                  <span>Rounds đã tham gia</span>
-                  <span className="text-fg">{stats ? stats.roundsPlayed : '—'}</span>
+                <div className="flex gap-2">
+                  <Button size="sm" variant="secondary" leftIcon="sparkles" onClick={onPickAvatar}>
+                    Upload
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={onRemoveAvatar} disabled={!avatarDataUrl}>
+                    Remove
+                  </Button>
+                  <input
+                    ref={fileRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={onFileChange}
+                  />
                 </div>
-                <div className="flex items-center justify-between rounded-2xl border border-border bg-surface px-4 py-3">
-                  <span>Đã reveal</span>
-                  <span className="text-fg">{stats ? stats.revealed : '—'}</span>
+              </div>
+              <div className="space-y-2">
+                <span className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-strong">Display Name</span>
+                <Input placeholder="Enter your name…" value={name} onChange={(e) => setName(e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <span className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-strong">Bio</span>
+                <Textarea placeholder="Tell us about yourself…" value={bio} onChange={(e) => setBio(e.target.value)} rows={3} />
+              </div>
+              <div className="flex gap-3">
+                <Button size="lg" rightIcon="sparkles" onClick={onSave}>
+                  Save Profile
+                </Button>
+                <Button size="lg" variant="outline" onClick={onClear}>
+                  Clear
+                </Button>
+                {status ? <span className="self-center text-xs text-brand-strong">{status}</span> : null}
+              </div>
+              {savedAt ? (
+                <p className="text-xs text-muted">Last updated: {new Date(savedAt).toLocaleString()}</p>
+              ) : null}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Right Column - Stats & Wallet */}
+        <div className="space-y-6">
+          {/* Wallet Balance */}
+          <Card variant="solid">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Icon name="wallet" className="h-5 w-5" />
+                My Wallet
+              </CardTitle>
+              <CardDescription>Your current FOOD token balance</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="rounded-2xl bg-gradient-to-br from-brand/20 to-brand/5 p-6 text-center group cursor-default">
+                <div className="text-3xl font-bold text-brand-strong transition-all duration-500 group-hover:scale-110">
+                  {demo.formatFoodBalance(currentBalance)}
                 </div>
-                <div className="flex items-center justify-between rounded-2xl border border-border bg-surface px-4 py-3">
-                  <span>Đã claim</span>
-                  <span className="text-fg">{stats ? stats.claimed : '—'}</span>
+                <div className="mt-1 text-xs text-muted">Total Balance</div>
+              </div>
+              <div className="rounded-xl bg-surface-subtle border border-border p-4 space-y-2">
+                <div className="flex items-center justify-between text-sm group hover:bg-surface transition-colors px-2 py-1 rounded">
+                  <span className="text-muted">Initial Balance</span>
+                  <span className="font-semibold text-muted-strong transition-transform group-hover:scale-105">100.000 FOOD</span>
                 </div>
-              </CardContent>
-            </Card>
-          </div>
-        </CardContent>
-      </Card>
+                <div className="flex items-center justify-between text-sm group hover:bg-surface transition-colors px-2 py-1 rounded">
+                  <span className="text-muted">Net Earnings</span>
+                  <span className={`font-semibold transition-all duration-300 group-hover:scale-105 ${totalEarnings >= 0n ? 'text-green-600' : 'text-red-600'}`}>
+                    {totalEarnings >= 0n ? '+' : ''}{demo.formatFoodBalance(totalEarnings)}
+                  </span>
+                </div>
+              </div>
+              
+              {/* Formula explanation */}
+              <div className="rounded-xl bg-brand/5 border border-brand/20 p-3">
+                <div className="flex items-start gap-2">
+                  <Icon name="info" className="h-4 w-4 text-brand-strong mt-0.5 flex-shrink-0" />
+                  <div className="text-xs text-muted-strong">
+                    <p className="font-semibold mb-1">Balance Formula:</p>
+                    <p className="font-mono text-xs">
+                      Current = Initial (100) {totalEarnings >= 0n ? '+' : ''} Earnings ({demo.formatFoodBalance(totalEarnings)})
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Detailed Stats */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Icon name="trophy" className="h-5 w-5" />
+                Statistics
+              </CardTitle>
+              <CardDescription>Performance breakdown</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3 text-sm">
+              <div className="flex items-center justify-between rounded-xl bg-surface-subtle px-4 py-3">
+                <span className="text-muted">Rounds Played</span>
+                <span className="font-semibold text-fg">{stats?.roundsPlayed || 0}</span>
+              </div>
+              <div className="flex items-center justify-between rounded-xl bg-surface-subtle px-4 py-3">
+                <span className="text-muted">Revealed</span>
+                <span className="font-semibold text-fg">{stats?.revealed || 0}</span>
+              </div>
+              <div className="flex items-center justify-between rounded-xl bg-surface-subtle px-4 py-3">
+                <span className="text-muted">Wins</span>
+                <span className="font-semibold text-green-600">{stats?.wins || 0}</span>
+              </div>
+              <div className="flex items-center justify-between rounded-xl bg-surface-subtle px-4 py-3">
+                <span className="text-muted">Claimed</span>
+                <span className="font-semibold text-fg">{stats?.claimed || 0}</span>
+              </div>
+              <div className="flex items-center justify-between rounded-xl bg-surface-subtle px-4 py-3">
+                <span className="text-muted">Win Rate</span>
+                <span className={`font-semibold ${winRate >= 50 ? 'text-green-600' : 'text-muted'}`}>
+                  {winRate}%
+                </span>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Social Actions (Mock) */}
+          <Card variant="glass">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Icon name="sparkles" className="h-5 w-5" />
+                Social
+              </CardTitle>
+              <CardDescription>Connect with other players</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Button variant="outline" className="w-full" leftIcon="trophy">
+                View Leaderboard
+              </Button>
+              <Button variant="outline" className="w-full" leftIcon="history">
+                Browse All Rounds
+              </Button>
+              <div className="pt-2 text-center text-xs text-muted">
+                More social features coming soon!
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
   )
 }

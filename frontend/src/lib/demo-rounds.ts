@@ -36,6 +36,7 @@ type DemoState = {
   currentRoundId: number
   rounds: Record<number, DemoRound>
   playerRounds: Record<string, DemoPlayerRound> // key: `${roundId}:${player}`
+  playerBalances: Record<string, bigint> // key: player address -> FOOD balance in lamports
 }
 
 const LS_KEY = 'choco:demo:v1'
@@ -52,6 +53,18 @@ function loadState(): DemoState {
         // Revive BigInt values
         if (key === 'stakeLamports' && typeof value === 'string') {
           return BigInt(value)
+        }
+        // Revive player balances
+        if (key === 'playerBalances' && typeof value === 'object' && value !== null) {
+          const balances: Record<string, bigint> = {}
+          for (const [player, balance] of Object.entries(value)) {
+            if (typeof balance === 'string' || typeof balance === 'number') {
+              balances[player] = BigInt(balance)
+            } else {
+              balances[player] = 0n
+            }
+          }
+          return balances
         }
         return value
       }) as DemoState
@@ -114,12 +127,44 @@ function createStateWithNewRound(base?: DemoState): DemoState {
   const round = createRound(id)
   const state: DemoState = base
     ? { ...base, currentRoundId: id, rounds: { ...base.rounds, [id]: round } }
-    : { currentRoundId: id, rounds: { [id]: round }, playerRounds: {} }
+    : { currentRoundId: id, rounds: { [id]: round }, playerRounds: {}, playerBalances: {} }
   return state
 }
 
 function keyFor(roundId: number, player: string) {
   return `${roundId}:${player}`
+}
+
+// FOOD token balance management
+const INITIAL_FOOD_BALANCE = BigInt(100_000_000_000) // 100 FOOD tokens (9 decimals)
+
+function ensurePlayerBalance(state: DemoState, player: string) {
+  if (!state.playerBalances) {
+    state.playerBalances = {}
+  }
+  if (state.playerBalances[player] === undefined) {
+    state.playerBalances[player] = INITIAL_FOOD_BALANCE
+  }
+}
+
+function getPlayerBalance(state: DemoState, player: string): bigint {
+  ensurePlayerBalance(state, player)
+  return state.playerBalances[player] ?? 0n
+}
+
+function deductStake(state: DemoState, player: string, amount: bigint) {
+  ensurePlayerBalance(state, player)
+  const current = state.playerBalances[player] ?? 0n
+  if (current < amount) {
+    throw new Error('Insufficient FOOD balance')
+  }
+  state.playerBalances[player] = current - amount
+}
+
+function addPayout(state: DemoState, player: string, amount: bigint) {
+  ensurePlayerBalance(state, player)
+  const current = state.playerBalances[player] ?? 0n
+  state.playerBalances[player] = current + amount
 }
 
 function recalcCounts(state: DemoState, roundId: number) {
@@ -137,6 +182,21 @@ function maybeSettle(state: DemoState, roundId: number) {
   const round = state.rounds[roundId]
   if (!round) return
   const t = nowSec()
+  
+  // Auto-reveal all committed players when reveal phase starts
+  if (t >= round.commitEndTime && t < round.revealEndTime) {
+    const prs = Object.values(state.playerRounds).filter(
+      (x) => x.roundId === roundId && !x.revealed
+    )
+    prs.forEach((pr) => {
+      pr.revealed = true
+      pr.revealedAt = Date.now()
+    })
+    if (prs.length > 0) {
+      recalcCounts(state, roundId)
+    }
+  }
+  
   // compute winner after reveal ends if not set
   if (t >= round.revealEndTime && round.winnerSide === null) {
     const prs = Object.values(state.playerRounds).filter((x) => x.roundId === roundId && x.revealed)
@@ -195,12 +255,19 @@ export async function commit(
   player: PublicKey,
   tribe: Tribe,
   salt: Uint8Array,
+  customStakeLamports?: bigint,
 ): Promise<DemoPlayerRound> {
   const state = loadState()
   const round = state.rounds[roundId]
   if (!round) throw new Error('Round not found')
   const t = nowSec()
   if (t >= round.commitEndTime) throw new Error('Commit phase closed')
+
+  // Use custom stake or default round stake
+  const stakeAmount = customStakeLamports ?? round.stakeLamports
+  
+  // Deduct stake from player balance
+  deductStake(state, player.toBase58(), stakeAmount)
 
   const roundPk = getRoundAddress(roundId)
   const commitment = await computeCommitment(tribe, salt, player, roundPk)
@@ -265,6 +332,13 @@ export function claim(roundId: number, player: PublicKey) {
   if (pr.claimed) throw new Error('Already claimed')
   if (round.winnerSide === null) throw new Error('Tie (no winner)')
   if (round.winnerSide !== pr.tribe) throw new Error('Not on winning side')
+  
+  // Calculate payout
+  const payout = computePayoutPerWinner(roundId)
+  
+  // Add payout to player balance
+  addPayout(state, player.toBase58(), payout)
+  
   pr.claimed = true
   pr.claimedAt = Date.now()
   saveState(state)
@@ -331,7 +405,7 @@ export function getPlayerStats(player: PublicKey): {
 }
 
 // Simulator helper functions
-export function demoCommit(roundId: number, playerAddress: string, tribe: Tribe, saltHex: `0x${string}`) {
+export function demoCommit(roundId: number, playerAddress: string, tribe: Tribe, saltHex: `0x${string}`, customStakeLamports?: bigint) {
   const state = loadState()
   const round = state.rounds[roundId]
   if (!round) throw new Error('Round not found')
@@ -341,6 +415,12 @@ export function demoCommit(roundId: number, playerAddress: string, tribe: Tribe,
   
   const k = keyFor(roundId, playerAddress)
   if (state.playerRounds[k]) throw new Error('Already committed')
+
+  // Use custom stake or default round stake
+  const stakeAmount = customStakeLamports ?? round.stakeLamports
+  
+  // Deduct stake from player balance
+  deductStake(state, playerAddress, stakeAmount)
 
   // Create fake commitment
   const commitment = saltHex.replace('0x', '')
@@ -393,4 +473,91 @@ export function advanceToNextRound() {
 
 export function clearAllDemoData() {
   localStorage.removeItem(LS_KEY)
+}
+
+// Get player's FOOD token balance
+export function getBalance(player: PublicKey | string): bigint {
+  const state = loadState()
+  const address = typeof player === 'string' ? player : player.toBase58()
+  return getPlayerBalance(state, address)
+}
+
+// Format FOOD balance for display (9 decimals)
+export function formatFoodBalance(lamports: bigint): string {
+  // Ensure we have a BigInt
+  const amount = typeof lamports === 'bigint' ? lamports : BigInt(lamports || 0)
+  
+  const neg = amount < 0n
+  const v = neg ? -amount : amount
+  const whole = v / 1_000_000_000n
+  const fracPart = (v % 1_000_000_000n).toString().padStart(9, '0')
+  const frac = fracPart.slice(0, 3) // 3 decimal places
+  return `${neg ? '-' : ''}${whole.toString()}.${frac} FOOD`
+}
+
+// Get balance history for a player across all rounds (cumulative earnings)
+export function getBalanceHistory(player: PublicKey | string): Array<{ roundId: number; balance: bigint; change: bigint; timestamp: number; earnings: bigint }> {
+  const state = loadState()
+  const address = typeof player === 'string' ? player : player.toBase58()
+  
+  const playerRounds = Object.values(state.playerRounds)
+    .filter(pr => pr.player === address)
+    .sort((a, b) => a.roundId - b.roundId)
+  
+  const history: Array<{ roundId: number; balance: bigint; change: bigint; timestamp: number; earnings: bigint }> = []
+  let totalEarnings = 0n // Cumulative net profit/loss (not including stake)
+  
+  // Start with zero earnings
+  const firstRound = playerRounds[0]
+  if (firstRound) {
+    history.push({
+      roundId: 0,
+      balance: 0n,
+      change: 0n,
+      timestamp: firstRound.committedAt - 1000,
+      earnings: 0n
+    })
+  }
+  
+  for (const pr of playerRounds) {
+    const round = state.rounds[pr.roundId]
+    if (!round) continue
+    
+    let netProfit = 0n // Net profit/loss for this round
+    
+    // Calculate earnings based on round status
+    if (round.isFinalized && round.winnerSide !== null) {
+      if (round.winnerSide === pr.tribe) {
+        // Won: only count if claimed
+        if (pr.claimed) {
+          const totalStake = BigInt(round.countMilk + round.countCacao) * round.stakeLamports
+          const fee = (totalStake * BigInt(round.feeBps)) / 10000n
+          const pool = totalStake - fee
+          const winnerCount = round.winnerSide === 'Milk' ? round.countMilk : round.countCacao
+          if (winnerCount > 0) {
+            const payout = pool / BigInt(winnerCount)
+            // Net profit = payout - original stake
+            netProfit = payout - BigInt(round.stakeLamports)
+          }
+        }
+        // If won but not claimed yet, netProfit = 0 (pending)
+      } else {
+        // Lost: count the loss immediately when finalized (even if not "claimed")
+        netProfit = -BigInt(round.stakeLamports)
+      }
+    }
+    // If not finalized yet, netProfit = 0 (pending)
+    
+    totalEarnings += netProfit
+    
+    history.push({
+      roundId: pr.roundId,
+      balance: totalEarnings,
+      change: netProfit,
+      timestamp: pr.claimedAt || pr.revealedAt || pr.committedAt,
+      earnings: totalEarnings
+    })
+  }
+  
+  return history
 }

@@ -11,7 +11,6 @@ type NavItem = { to: string; label: string; icon: Parameters<typeof Icon>[0]['na
 
 const baseItems: NavItem[] = [
   { to: '/join', label: 'Join', icon: 'sparkles' },
-  { to: '/reveal', label: 'Reveal', icon: 'timer' },
   { to: '/claim', label: 'Claim', icon: 'treasury' },
   { to: '/profile', label: 'Profile', icon: 'user' },
   { to: '/rounds', label: 'Rounds', icon: 'history' },

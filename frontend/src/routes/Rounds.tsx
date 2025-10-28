@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card'
 import { Button } from '../components/ui/Button'
 import { Icon } from '../components/ui/Icon'
+import { CatIllustration } from '../components/CatIllustration'
 import { getRecentDemoRounds, type DemoRound } from '../lib/demo-rounds'
 
 function statusOf(r: DemoRound) {
@@ -26,7 +27,10 @@ export default function RoundsPage() {
     <div className="space-y-8">
       <Card>
         <CardHeader>
-          <CardTitle>Round timeline</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <CatIllustration type="box" size="sm" className="animate-float" />
+            Round timeline
+          </CardTitle>
           <CardDescription>
             Recent rounds (demo mode). After wiring events/indexer (E1/F1), data will update in real time.
           </CardDescription>

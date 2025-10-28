@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { LeaderboardTable, Column } from '../components/LeaderboardTable';
+import { CatIllustration } from '../components/CatIllustration';
 import {
   fetchTopPayout,
   fetchWeeklyWinRate,
@@ -192,13 +193,19 @@ export default function LeaderboardPage() {
 
   return (
     <main className="max-w-6xl mx-auto p-6 space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-          Leaderboard
-        </h1>
-        <p className="text-gray-600 dark:text-gray-400">
-          Top players and weekly win rates from the Solana indexer
-        </p>
+      <div className="relative">
+        <div className="absolute top-0 right-0 opacity-20">
+          <CatIllustration type="winner" size="xl" />
+        </div>
+        <div className="relative z-10">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-3">
+            <CatIllustration type="winner" size="md" className="animate-bounce-slow" />
+            Leaderboard
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400">
+            Top players and weekly win rates from the Solana indexer
+          </p>
+        </div>
       </div>
 
       {/* Top Payout Table */}

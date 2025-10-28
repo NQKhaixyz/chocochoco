@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { Icon } from './ui/Icon'
+import { CatIllustration } from './CatIllustration'
 import { cn } from '../lib/cn'
 import { 
   demoCommit, 
@@ -19,6 +20,7 @@ export function DemoSimulator({ onUpdate }: SimulatorProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [autoPlayers, setAutoPlayers] = useState(10)
   const [milkPercent, setMilkPercent] = useState(40)
+  const [stakeAmount, setStakeAmount] = useState(5.0) // Stake in FOOD tokens
 
   const handleAutoJoin = () => {
     const round = getCurrentRound()
@@ -29,6 +31,7 @@ export function DemoSimulator({ onUpdate }: SimulatorProps) {
 
     const milkCount = Math.floor(autoPlayers * (milkPercent / 100))
     const cacaoCount = autoPlayers - milkCount
+    const stakeLamports = BigInt(Math.floor(stakeAmount * 1_000_000_000)) // Convert to lamports
 
     let committed = 0
     
@@ -37,7 +40,7 @@ export function DemoSimulator({ onUpdate }: SimulatorProps) {
       const fakePlayer = `SIM${Date.now()}${i}MILK`
       const salt = generateSalt()
       try {
-        demoCommit(round.id, fakePlayer, 'Milk', salt)
+        demoCommit(round.id, fakePlayer, 'Milk', salt, stakeLamports)
         committed++
       } catch (e) {
         console.error('Failed to commit:', e)
@@ -49,51 +52,14 @@ export function DemoSimulator({ onUpdate }: SimulatorProps) {
       const fakePlayer = `SIM${Date.now()}${i}CACAO`
       const salt = generateSalt()
       try {
-        demoCommit(round.id, fakePlayer, 'Cacao', salt)
+        demoCommit(round.id, fakePlayer, 'Cacao', salt, stakeLamports)
         committed++
       } catch (e) {
         console.error('Failed to commit:', e)
       }
     }
 
-    toast.success(`${committed} players committed! (${milkCount} Milk, ${cacaoCount} Cacao)`)
-    onUpdate?.()
-  }
-
-  const handleAutoReveal = () => {
-    const round = getCurrentRound()
-    if (!round) {
-      toast.error('No active round found')
-      return
-    }
-
-    // Get all committed players from localStorage
-    const state = localStorage.getItem('choco:demo:v1')
-    if (!state) return
-
-    const parsed = JSON.parse(state, (key, value) => {
-      if (key === 'stakeLamports' && typeof value === 'string') {
-        return BigInt(value)
-      }
-      return value
-    })
-
-    const playerRounds = Object.values(parsed.playerRounds) as any[]
-    const toReveal = playerRounds.filter(
-      (pr: any) => pr.roundId === round.id && !pr.revealed
-    )
-
-    let revealed = 0
-    toReveal.forEach((pr: any) => {
-      try {
-        demoReveal(round.id, pr.player, pr.tribe, pr.saltHex)
-        revealed++
-      } catch (e) {
-        console.error('Failed to reveal:', e)
-      }
-    })
-
-    toast.success(`${revealed} players revealed!`)
+    toast.success(`${committed} players committed with ${stakeAmount} FOOD each! (${milkCount} Milk, ${cacaoCount} Cacao)`)
     onUpdate?.()
   }
 
@@ -157,7 +123,7 @@ export function DemoSimulator({ onUpdate }: SimulatorProps) {
         className="fixed bottom-4 right-4 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-purple-500 to-pink-500 text-white shadow-lg hover:shadow-xl transition-all hover:scale-110"
         title="Open Demo Simulator"
       >
-        <Icon name="sparkles" className="h-6 w-6" />
+        <CatIllustration type="stack" size="md" className="animate-bounce-slow" />
       </button>
     )
   }
@@ -166,7 +132,7 @@ export function DemoSimulator({ onUpdate }: SimulatorProps) {
     <div className="fixed bottom-4 right-4 z-50 w-96 rounded-2xl border border-border bg-surface shadow-2xl">
       <div className="flex items-center justify-between border-b border-border bg-gradient-to-r from-purple-500/10 to-pink-500/10 px-4 py-3">
         <div className="flex items-center gap-2">
-          <Icon name="sparkles" className="h-5 w-5 text-purple-500" />
+          <CatIllustration type="stack" size="sm" className="animate-bounce-slow" />
           <h3 className="font-semibold text-fg">Demo Simulator</h3>
         </div>
         <button
@@ -181,7 +147,7 @@ export function DemoSimulator({ onUpdate }: SimulatorProps) {
         {/* Auto Join Section */}
         <div className="space-y-3 rounded-xl border border-border bg-surface-subtle p-4">
           <h4 className="text-sm font-semibold text-fg flex items-center gap-2">
-            <Icon name="user" className="h-4 w-4" />
+            <CatIllustration type="play" size="sm" className="animate-float" />
             Auto Join Players
           </h4>
           
@@ -213,34 +179,42 @@ export function DemoSimulator({ onUpdate }: SimulatorProps) {
             </div>
           </div>
 
+          <div className="space-y-2">
+            <label className="text-xs text-muted">Stake per Player: {stakeAmount.toFixed(3)} FOOD</label>
+            <input
+              type="range"
+              min="0.1"
+              max="50"
+              step="0.1"
+              value={stakeAmount}
+              onChange={(e) => setStakeAmount(Number(e.target.value))}
+              className="w-full"
+            />
+            <div className="flex justify-between text-xs text-muted">
+              <span>Min: 0.1</span>
+              <span>Total Pool: {(autoPlayers * stakeAmount).toFixed(2)} FOOD</span>
+              <span>Max: 50</span>
+            </div>
+          </div>
+
           <button
             onClick={handleAutoJoin}
             className="w-full rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-on-brand hover:bg-brand-strong transition"
           >
-            Commit {autoPlayers} Players
-          </button>
-        </div>
-
-        {/* Auto Reveal Section */}
-        <div className="space-y-3 rounded-xl border border-border bg-surface-subtle p-4">
-          <h4 className="text-sm font-semibold text-fg flex items-center gap-2">
-            <Icon name="sparkles" className="h-4 w-4" />
-            Auto Reveal
-          </h4>
-          <button
-            onClick={handleAutoReveal}
-            className="w-full rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700 transition"
-          >
-            Reveal All Players
+            Commit {autoPlayers} Players × {stakeAmount.toFixed(1)} FOOD
           </button>
         </div>
 
         {/* Time Travel Section */}
         <div className="space-y-3 rounded-xl border border-border bg-surface-subtle p-4">
           <h4 className="text-sm font-semibold text-fg flex items-center gap-2">
-            <Icon name="timer" className="h-4 w-4" />
+            <CatIllustration type="thinking" size="sm" />
             Time Travel
           </h4>
+          <p className="text-xs text-muted mb-2 flex items-center gap-1.5">
+            <Icon name="info" className="h-3 w-3" />
+            Players auto-reveal when commit phase ends
+          </p>
           <div className="grid grid-cols-2 gap-2">
             <button
               onClick={() => handleTimeTravel(30)}
@@ -272,7 +246,7 @@ export function DemoSimulator({ onUpdate }: SimulatorProps) {
         {/* Round Control Section */}
         <div className="space-y-3 rounded-xl border border-border bg-surface-subtle p-4">
           <h4 className="text-sm font-semibold text-fg flex items-center gap-2">
-            <Icon name="history" className="h-4 w-4" />
+            <CatIllustration type="winner" size="sm" className="animate-wiggle" />
             Round Control
           </h4>
           <button
