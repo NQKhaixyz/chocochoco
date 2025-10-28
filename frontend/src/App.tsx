@@ -13,6 +13,7 @@ const ProfilePage = lazy(() => import('./routes/Profile'))
 const RoundsPage = lazy(() => import('./routes/Rounds'))
 const LeaderboardPage = lazy(() => import('./routes/leaderboard'))
 const TokenDashboard = lazy(() => import('./routes/TokenDashboard'))
+const SimulatorPage = lazy(() => import('./routes/Simulator'))
 const AdminPage = lazy(() => import('./routes/Admin'))
 const Landing = lazy(() => import('./routes/Landing'))
 const Styleguide = lazy(() => import('./routes/Styleguide'))
@@ -52,6 +53,7 @@ const router = createBrowserRouter([
       { path: 'rounds', element: lazyRoute(RoundsPage), handle: { breadcrumb: 'Rounds' } },
       { path: 'leaderboard', element: lazyRoute(LeaderboardPage), handle: { breadcrumb: 'Leaderboard' } },
       { path: 'tokens', element: lazyRoute(TokenDashboard), handle: { breadcrumb: 'Tokens' } },
+      { path: 'simulator', element: lazyRoute(SimulatorPage), handle: { breadcrumb: 'Simulator' } },
       { path: 'landing', element: lazyRoute(Landing), handle: { breadcrumb: 'Landing', hidden: true } },
       ...(ENABLE_ADMIN
         ? ([{ path: 'admin', element: lazyRoute(AdminPage), handle: { breadcrumb: 'Admin' } }] as const)

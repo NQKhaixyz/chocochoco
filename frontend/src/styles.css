@@ -89,6 +89,31 @@
   animation: wiggle 2s ease-in-out infinite;
 }
 
+/* Animation delays */
+.animation-delay-300 {
+  animation-delay: 300ms;
+}
+
+.animation-delay-500 {
+  animation-delay: 500ms;
+}
+
+.animation-delay-600 {
+  animation-delay: 600ms;
+}
+
+.animation-delay-700 {
+  animation-delay: 700ms;
+}
+
+.animation-delay-800 {
+  animation-delay: 800ms;
+}
+
+.animation-delay-1000 {
+  animation-delay: 1000ms;
+}
+
 /* Wallet adapter button tweaks to avoid layout overflow in header */
 .wallet-adapter-button,
 .wallet-adapter-dropdown {

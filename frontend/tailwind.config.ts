@@ -82,16 +82,16 @@ export default {
       },
       keyframes: {
         pop: {
-          '0%': { transform: 'scale(.96)', opacity: 0.6 },
-          '100%': { transform: 'scale(1)', opacity: 1 },
+          '0%': { transform: 'scale(.96)', opacity: '0.6' },
+          '100%': { transform: 'scale(1)', opacity: '1' },
         },
         fadeUp: {
-          '0%': { transform: 'translateY(6px)', opacity: 0 },
-          '100%': { transform: 'translateY(0)', opacity: 1 },
+          '0%': { transform: 'translateY(6px)', opacity: '0' },
+          '100%': { transform: 'translateY(0)', opacity: '1' },
         },
         confetti: {
-          '0%': { transform: 'translateY(-20px)', opacity: 0 },
-          '100%': { transform: 'translateY(0)', opacity: 1 },
+          '0%': { transform: 'translateY(-20px)', opacity: '0' },
+          '100%': { transform: 'translateY(0)', opacity: '1' },
         },
         shake: {
           '0%,100%': { transform: 'translateX(0)' },
@@ -106,6 +106,14 @@ export default {
           '0%,100%': { transform: 'translateY(0)' },
           '50%': { transform: 'translateY(-4px)' },
         },
+        bounceSlow: {
+          '0%, 100%': { transform: 'translateY(0)' },
+          '50%': { transform: 'translateY(-10px)' },
+        },
+        pulse: {
+          '0%, 100%': { opacity: '1' },
+          '50%': { opacity: '0.5' },
+        },
       },
       animation: {
         pop: 'pop .24s ease-out',
@@ -114,6 +122,15 @@ export default {
         shake: 'shake .28s ease-in-out',
         shimmer: 'shimmer 1.4s var(--transition-base) infinite',
         float: 'floaty 4.2s ease-in-out infinite',
+        'bounce-slow': 'bounceSlow 3s ease-in-out infinite',
+        pulse: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+      },
+      animationDelay: {
+        '0': '0ms',
+        '300': '300ms',
+        '500': '500ms',
+        '700': '700ms',
+        '1000': '1000ms',
       },
       boxShadow: {
         soft: 'var(--shadow-soft)',

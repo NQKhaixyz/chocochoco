@@ -117,18 +117,18 @@ export default function TokenDashboard() {
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle>Current Balance</CardTitle>
-              <Icon name="wallet" className="h-5 w-5 text-brand-strong" />
+              <CardTitle className="text-sm">Current Balance</CardTitle>
+              <Icon name="wallet" className="h-4 w-4 text-brand-strong" />
             </div>
           </CardHeader>
           <CardContent>
             <div className="flex items-baseline gap-2">
-              <span className="text-4xl font-bold text-fg">
+              <span className="text-2xl font-bold text-fg">
                 {demo.formatFoodBalance(balance)}
               </span>
-              <span className="text-sm text-muted">FOOD</span>
+              <span className="text-xs text-muted">FOOD</span>
             </div>
-            <p className="mt-2 text-xs text-muted">
+            <p className="mt-1 text-xs text-muted">
               Available to stake in next round
             </p>
           </CardContent>
@@ -137,18 +137,18 @@ export default function TokenDashboard() {
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle>Total Earned</CardTitle>
-              <Icon name="treasury" className="h-5 w-5 text-green-500" />
+              <CardTitle className="text-sm">Total Earned</CardTitle>
+              <Icon name="treasury" className="h-4 w-4 text-green-500" />
             </div>
           </CardHeader>
           <CardContent>
             <div className="flex items-baseline gap-2">
-              <span className="text-4xl font-bold text-green-500">
+              <span className="text-2xl font-bold text-green-500">
                 {demo.formatFoodBalance(stats.totalEarned)}
               </span>
-              <span className="text-sm text-muted">FOOD</span>
+              <span className="text-xs text-muted">FOOD</span>
             </div>
-            <p className="mt-2 text-xs text-muted">
+            <p className="mt-1 text-xs text-muted">
               Across {stats.totalRounds} rounds
             </p>
           </CardContent>
@@ -157,22 +157,22 @@ export default function TokenDashboard() {
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle>Net Profit</CardTitle>
-              <Icon name="trophy" className="h-5 w-5 text-brand-strong" />
+              <CardTitle className="text-sm">Net Profit</CardTitle>
+              <Icon name="trophy" className="h-4 w-4 text-brand-strong" />
             </div>
           </CardHeader>
           <CardContent>
             <div className="flex items-baseline gap-2">
               <span className={cn(
-                "text-4xl font-bold",
+                "text-2xl font-bold",
                 stats.totalProfit > 0n ? "text-green-500" : stats.totalProfit < 0n ? "text-red-500" : "text-muted"
               )}>
                 {stats.totalProfit > 0n ? "+" : ""}
                 {demo.formatFoodBalance(stats.totalProfit)}
               </span>
-              <span className="text-sm text-muted">FOOD</span>
+              <span className="text-xs text-muted">FOOD</span>
             </div>
-            <p className="mt-2 text-xs text-muted">
+            <p className="mt-1 text-xs text-muted">
               Average ROI: {stats.avgROI.toFixed(2)}%
             </p>
           </CardContent>
@@ -182,48 +182,48 @@ export default function TokenDashboard() {
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-4">
         <Card variant="glass">
-          <CardContent className="flex items-center gap-4 p-6">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand/20">
-              <Icon name="treasury" className="h-6 w-6 text-brand-strong" />
+          <CardContent className="flex items-center gap-4 p-4">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand/20">
+              <Icon name="treasury" className="h-5 w-5 text-brand-strong" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-fg">{demo.formatFoodBalance(stats.totalStaked)}</p>
+              <p className="text-lg font-bold text-fg">{demo.formatFoodBalance(stats.totalStaked)}</p>
               <p className="text-xs text-muted">Total Staked</p>
             </div>
           </CardContent>
         </Card>
 
         <Card variant="glass">
-          <CardContent className="flex items-center gap-4 p-6">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-500/20">
-              <Icon name="success" className="h-6 w-6 text-green-500" />
+          <CardContent className="flex items-center gap-4 p-4">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-500/20">
+              <Icon name="success" className="h-5 w-5 text-green-500" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-fg">{stats.winCount}</p>
+              <p className="text-lg font-bold text-fg">{stats.winCount}</p>
               <p className="text-xs text-muted">Wins</p>
             </div>
           </CardContent>
         </Card>
 
         <Card variant="glass">
-          <CardContent className="flex items-center gap-4 p-6">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-500/20">
-              <Icon name="history" className="h-6 w-6 text-blue-500" />
+          <CardContent className="flex items-center gap-4 p-4">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-500/20">
+              <Icon name="history" className="h-5 w-5 text-blue-500" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-fg">{stats.totalRounds}</p>
+              <p className="text-lg font-bold text-fg">{stats.totalRounds}</p>
               <p className="text-xs text-muted">Total Rounds</p>
             </div>
           </CardContent>
         </Card>
 
         <Card variant="glass">
-          <CardContent className="flex items-center gap-4 p-6">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-purple-500/20">
-              <Icon name="sparkles" className="h-6 w-6 text-purple-500" />
+          <CardContent className="flex items-center gap-4 p-4">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-500/20">
+              <Icon name="sparkles" className="h-5 w-5 text-purple-500" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-fg">{stats.avgROI.toFixed(1)}%</p>
+              <p className="text-lg font-bold text-fg">{stats.avgROI.toFixed(1)}%</p>
               <p className="text-xs text-muted">Avg ROI</p>
             </div>
           </CardContent>

@@ -16,6 +16,7 @@ const baseItems: NavItem[] = [
   { to: '/rounds', label: 'Rounds', icon: 'history' },
   { to: '/leaderboard', label: 'Leaderboard', icon: 'trophy' },
   { to: '/tokens', label: 'Tokens', icon: 'wallet' },
+  { to: '/simulator', label: 'Simulator', icon: 'sparkles' },
 ]
 
 export const navItems: NavItem[] = ENABLE_ADMIN ? [...baseItems, { to: '/admin', label: 'Admin', icon: 'dashboard' }] : baseItems
