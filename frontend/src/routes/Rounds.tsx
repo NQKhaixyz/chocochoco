@@ -53,12 +53,20 @@ export default function RoundsPage() {
                   <Icon name={round.winnerSide === 'Milk' ? 'milk' : 'cacao'} className="h-4 w-4 text-brand-strong" />
                   <span className="font-semibold text-fg">{round.winnerSide}</span>
                   <span className="text-xs uppercase tracking-[0.18em] text-muted">—</span>
+                  <span className="text-xs uppercase tracking-[0.2em] text-muted">
+                    Milk {round.countMilk} · Cacao {round.countCacao}
+                  </span>
                 </div>
               ) : (
                 <div className="flex items-center gap-3 text-xs uppercase tracking-[0.2em] text-muted">
                   <span>Commit — {Math.max(0, round.commitEndTime - Math.floor(Date.now() / 1000))}s</span>
                   <span>Reveal — {Math.max(0, round.revealEndTime - Math.floor(Date.now() / 1000))}s</span>
-                  <span>Milk {round.countMilk} · Cacao {round.countCacao}</span>
+                  {/* Hide player counts during commit phase */}
+                  {Math.floor(Date.now() / 1000) < round.commitEndTime ? (
+                    <span className="text-brand-strong">🔒 Hidden (commit phase)</span>
+                  ) : (
+                    <span>Milk {round.countMilk} · Cacao {round.countCacao}</span>
+                  )}
                 </div>
               )}
             </div>

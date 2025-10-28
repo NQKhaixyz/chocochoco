@@ -8,6 +8,7 @@ import * as demo from '../lib/demo-rounds'
 
 export default function SimulatorPage() {
   const [isRunning, setIsRunning] = useState(false)
+  const [isInfiniteRunning, setIsInfiniteRunning] = useState(false)
   const [stats, setStats] = useState(simulator.getSimulatorStats())
   const [log, setLog] = useState<string[]>([])
   const [numRounds, setNumRounds] = useState(3)
@@ -48,6 +49,22 @@ export default function SimulatorPage() {
     }
   }
 
+  const handleAddAIPlayers = async () => {
+    setIsRunning(true)
+    const currentRound = demo.getCurrentRoundId()
+    addLog(`🤖 Adding AI players to Round ${currentRound}...`)
+    
+    try {
+      const count = await simulator.addAIPlayersToCurrentRound()
+      updateStats()
+      addLog(`✅ Added ${count} AI players to current round (you can now reveal together!)`)
+    } catch (e: any) {
+      addLog(`❌ Error: ${e.message}`)
+    } finally {
+      setIsRunning(false)
+    }
+  }
+
   const handleContinuousSimulation = async () => {
     setIsRunning(true)
     addLog(`🚀 Starting continuous simulation for ${numRounds} rounds...`)
@@ -61,6 +78,45 @@ export default function SimulatorPage() {
     } finally {
       setIsRunning(false)
     }
+  }
+
+  const handleStartInfinite = async () => {
+    setIsInfiniteRunning(true)
+    setIsRunning(true)
+    addLog(`♾️ Starting infinite simulation (will run until stopped)...`)
+    
+    // Update stats periodically
+    const interval = setInterval(() => {
+      if (simulator.isInfiniteSimulationActive()) {
+        updateStats()
+      } else {
+        clearInterval(interval)
+        setIsInfiniteRunning(false)
+        setIsRunning(false)
+      }
+    }, 2000)
+    
+    try {
+      // Start infinite simulation (will run until stopped)
+      await simulator.startInfiniteSimulation()
+      clearInterval(interval)
+      setIsInfiniteRunning(false)
+      setIsRunning(false)
+      addLog(`✅ Infinite simulation stopped`)
+    } catch (e: any) {
+      addLog(`❌ Error: ${e.message}`)
+      clearInterval(interval)
+      setIsInfiniteRunning(false)
+      setIsRunning(false)
+    }
+  }
+
+  const handleStopInfinite = () => {
+    simulator.stopInfiniteSimulation()
+    addLog(`⏹️ Stopping infinite simulation...`)
+    setIsInfiniteRunning(false)
+    setIsRunning(false)
+    updateStats()
   }
 
   const handleReset = () => {
@@ -285,34 +341,47 @@ export default function SimulatorPage() {
             </Button>
 
             <Button
+              onClick={handleAddAIPlayers}
+              disabled={isRunning || stats.totalUsers === 0}
+              variant="primary"
+              leftIcon="user"
+              className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+            >
+              {isRunning ? 'Adding AI...' : '🤖 Add AI to Current Round'}
+            </Button>
+
+            <Button
               onClick={handleSimulateRound}
               disabled={isRunning || stats.totalUsers === 0}
               variant="primary"
               leftIcon="treasury"
               className="w-full"
             >
-              {isRunning ? 'Simulating...' : 'Simulate Current Round'}
+              {isRunning ? 'Simulating...' : 'Simulate Full Round (AI only)'}
             </Button>
 
-            <div className="flex items-center gap-3">
-              <input
-                type="number"
-                min={1}
-                max={20}
-                value={numRounds}
-                onChange={(e) => setNumRounds(parseInt(e.target.value) || 1)}
-                className="flex-1 rounded-xl border border-border bg-surface px-4 py-2 text-fg"
-                disabled={isRunning}
-              />
-              <Button
-                onClick={handleContinuousSimulation}
-                disabled={isRunning || stats.totalUsers === 0}
-                variant="primary"
-                leftIcon="history"
-                className="flex-1"
-              >
-                {isRunning ? 'Running...' : `Run ${numRounds} Rounds`}
-              </Button>
+            <div className="border-t border-border pt-3 mt-3">
+              <p className="text-xs text-muted mb-2 text-center">Infinite Mode - AI plays until stopped</p>
+              {!isInfiniteRunning ? (
+                <Button
+                  onClick={handleStartInfinite}
+                  disabled={isRunning || stats.totalUsers === 0}
+                  variant="primary"
+                  leftIcon="history"
+                  className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
+                >
+                  ♾️ Start Infinite Simulation
+                </Button>
+              ) : (
+                <Button
+                  onClick={handleStopInfinite}
+                  variant="secondary"
+                  leftIcon="close"
+                  className="w-full bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 text-white"
+                >
+                  ⏹️ Stop Simulation
+                </Button>
+              )}
             </div>
 
             <div className="flex gap-3">

@@ -176,6 +176,7 @@ export async function simulateRoundCommits(roundId: number) {
   let cacaoCount = round.countCacao
   const commitResults: { user: string; tribe: Tribe; success: boolean }[] = []
   
+  // Process users one by one (not in parallel)
   for (const user of users) {
     // Check if user decides to play this round
     if (Math.random() > user.playRate) {
@@ -215,16 +216,16 @@ export async function simulateRoundCommits(roundId: number) {
       commitResults.push({ user: user.name, tribe, success: false })
     }
     
-    // Small delay to simulate real-world timing
-    await new Promise(resolve => setTimeout(resolve, 10))
+    // Small delay between each commit (sequential processing)
+    await new Promise(resolve => setTimeout(resolve, 20))
   }
   
-  console.log(`✅ Round ${roundId} simulation complete:`)
+  console.log(`✅ Round ${roundId} commits complete:`)
   console.log(`  - ${commitResults.filter(r => r.success).length} commits successful`)
   console.log(`  - Milk: ${milkCount}, Cacao: ${cacaoCount}`)
   console.log(`  - Minority: ${milkCount < cacaoCount ? 'Milk' : milkCount > cacaoCount ? 'Cacao' : 'Tied'}`)
   
-  return commitResults
+  return commitResults.filter(r => r.success).length
 }
 
 // Simulate users revealing
@@ -287,36 +288,101 @@ export async function simulateRoundClaims(roundId: number) {
 
 // Auto-play: simulate full round lifecycle
 export async function simulateFullRound(roundId: number) {
-  console.log(`🎮 Starting simulation for Round ${roundId}...`)
+  console.log(`🎮 Simulating Round ${roundId}...`)
   
   // 1. Commit phase
-  console.log('Phase 1: Commits')
-  await simulateRoundCommits(roundId)
+  console.log(`  📝 Phase 1: Commits`)
+  const commitCount = await simulateRoundCommits(roundId)
+  console.log(`  ✅ ${commitCount} commits completed`)
   
-  // Wait a bit
-  await new Promise(resolve => setTimeout(resolve, 500))
+  // Wait between phases
+  await new Promise(resolve => setTimeout(resolve, 1000))
   
   // 2. Reveal phase
-  console.log('Phase 2: Reveals')
-  await simulateRoundReveals(roundId)
+  console.log(`  🎭 Phase 2: Reveals`)
+  const revealCount = await simulateRoundReveals(roundId)
+  console.log(`  ✅ ${revealCount} reveals completed`)
   
-  // Wait a bit
-  await new Promise(resolve => setTimeout(resolve, 500))
+  // Wait between phases
+  await new Promise(resolve => setTimeout(resolve, 1000))
   
-  // 3. Finalize round (this happens automatically in demo-rounds)
+  // 3. Check finalization
   const round = demo.getRound(roundId)
-  if (round?.isFinalized) {
-    console.log(`Round ${roundId} finalized. Winner: ${round.winnerSide}`)
+  if (round?.isFinalized && round.winnerSide) {
+    console.log(`  🏆 Round ${roundId} settled: ${round.winnerSide} wins!`)
   }
   
   // 4. Claims
-  console.log('Phase 3: Claims')
-  await simulateRoundClaims(roundId)
+  console.log(`  💰 Phase 3: Claims`)
+  const claimCount = await simulateRoundClaims(roundId)
+  console.log(`  ✅ ${claimCount} claims completed`)
   
-  console.log(`🎉 Round ${roundId} simulation complete!\n`)
+  console.log(`🎉 Round ${roundId} complete!\n`)
   
   // Notify leaderboard to update
   notifyLeaderboardUpdate()
+}
+
+// Flag to control infinite simulation
+let isInfiniteSimulationRunning = false
+
+export function stopInfiniteSimulation() {
+  isInfiniteSimulationRunning = false
+}
+
+export function isInfiniteSimulationActive(): boolean {
+  return isInfiniteSimulationRunning
+}
+
+// Infinite simulation: auto-play rounds until stopped
+export async function startInfiniteSimulation() {
+  if (isInfiniteSimulationRunning) {
+    console.warn('Infinite simulation already running')
+    return
+  }
+  
+  console.log(`🚀 Starting infinite simulation (run until stopped)...`)
+  isInfiniteSimulationRunning = true
+  
+  // Notify simulation start
+  notifySimulationStart()
+  
+  // Initialize users if needed
+  initializeSimulator()
+  
+  let roundCount = 0
+  
+  while (isInfiniteSimulationRunning) {
+    const currentRoundId = demo.getCurrentRoundId()
+    
+    console.log(`\n--- Starting Round ${currentRoundId} ---`)
+    
+    try {
+      // Simulate this round completely
+      await simulateFullRound(currentRoundId)
+      roundCount++
+      
+      console.log(`✅ Round ${currentRoundId} complete, advancing to next round...`)
+      
+      // Advance to next round AFTER completing current one
+      demo.advanceToNextRound()
+      
+      // Delay between rounds so we can see each one
+      await new Promise(resolve => setTimeout(resolve, 2000))
+    } catch (e: any) {
+      console.error(`❌ Error in round ${currentRoundId}:`, e.message)
+      // Try to advance even if error
+      try {
+        demo.advanceToNextRound()
+      } catch {}
+      await new Promise(resolve => setTimeout(resolve, 1000))
+    }
+  }
+  
+  console.log(`✅ Infinite simulation stopped after ${roundCount} rounds.`)
+  
+  // Notify simulation end
+  notifySimulationEnd()
 }
 
 // Continuous simulation: auto-play multiple rounds
@@ -469,6 +535,83 @@ export function getSimulatedLeaderboard() {
     topPayout,
     topWinRate,
   }
+}
+
+/**
+ * Add AI players to current round only (doesn't auto-advance rounds)
+ * This allows AI to play alongside human players in the same round
+ */
+export async function addAIPlayersToCurrentRound(): Promise<number> {
+  const users = loadSimulatedUsers()
+  if (users.length === 0) {
+    console.warn('No simulated users found. Run initializeSimulator() first.')
+    return 0
+  }
+  
+  const currentRoundId = demo.getCurrentRoundId()
+  const round = demo.getRound(currentRoundId)
+  
+  if (!round) {
+    console.warn(`Round ${currentRoundId} not found`)
+    return 0
+  }
+  
+  const now = Math.floor(Date.now() / 1000)
+  if (now >= round.commitEndTime) {
+    console.warn('Commit phase has ended for current round')
+    return 0
+  }
+  
+  let successCount = 0
+  let milkCount = round.countMilk
+  let cacaoCount = round.countCacao
+  
+  // Process each user sequentially
+  for (const user of users) {
+    // Check if user decides to play (based on playRate)
+    if (Math.random() > user.playRate) {
+      continue
+    }
+    
+    // Check balance
+    const balance = demo.getBalance(user.address)
+    if (balance < BigInt(5_000_000_000)) { // Need at least 5 FOOD
+      continue
+    }
+    
+    // Choose tribe based on strategy
+    const tribe = chooseTribe(user, milkCount, cacaoCount)
+    
+    // Generate salt and commit
+    const salt = randomSalt32()
+    const saltHex = `0x${Array.from(salt).map(b => b.toString(16).padStart(2, '0')).join('')}` as `0x${string}`
+    
+    try {
+      // Random stake between 5-20 FOOD
+      const stakeAmount = BigInt(Math.floor(Math.random() * 15 + 5)) * 1_000_000_000n
+      
+      demo.demoCommit(currentRoundId, user.address, tribe, saltHex, stakeAmount)
+      
+      // Update local count
+      if (tribe === 'Milk') {
+        milkCount++
+      } else {
+        cacaoCount++
+      }
+      
+      successCount++
+    } catch (e) {
+      // Skip if commit fails
+    }
+    
+    // Small delay between commits
+    await new Promise(resolve => setTimeout(resolve, 20))
+  }
+  
+  console.log(`✅ Added ${successCount} AI players to Round ${currentRoundId}`)
+  console.log(`  - Milk: ${milkCount}, Cacao: ${cacaoCount}`)
+  
+  return successCount
 }
 
 // Get mixed leaderboard (real + simulated users)

@@ -6,6 +6,7 @@ import { Icon } from '../components/ui/Icon'
 import { ConnectButton } from '../components/ConnectButton'
 import { CatIllustration } from '../components/CatIllustration'
 import { OnboardingTour, useOnboarding } from '../components/OnboardingTour'
+import { JoinTutorial } from '../components/JoinTutorial'
 import { useDeadlines } from '../hooks/useSolanaRounds'
 import { formatCountdown } from '../lib/time-format'
 import { hasDeploymentConfigured } from '../lib/chocochoco-contract'
@@ -395,6 +396,9 @@ export default function JoinPage() {
           onSkip={markAsCompleted}
         />
       )}
+      
+      {/* Join Tutorial - Auto-shows on first visit */}
+      <JoinTutorial />
     </div>
   )
 }
